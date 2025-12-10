@@ -50,7 +50,7 @@
 
         .button-container {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 40px;
             max-width: 800px;
             margin: 0 auto;
@@ -152,13 +152,13 @@
             position: fixed;
             bottom: 20px;
             right: 20px;
-            width: 60px;
-            height: 60px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             background-color: transparent; /* 透明背景 */
             border: 3px solid #ffffff; /* 白色边框 */
             color: #ffffff; /* 白色感叹号 */
-            font-size: 32px; /* 增大感叹号大小 */
+            font-size: 24px; /* 增大感叹号大小 */
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
@@ -296,10 +296,12 @@
     <h1>海王鱼缸</h1>
     
     <div class="button-container">
-        <button class="big-button" onclick="alert('功能一：鱼类识别系统')">鱼类识别</button>
-        <button class="big-button" onclick="alert('功能二：生态分布图')">分布地图</button>
-        <button class="big-button" onclick="alert('功能三：鱼类介绍')">鱼类介绍</button>
+        <button class="big-button" onclick="alert('功能一')">功能一</button>
+        <button class="big-button" onclick="alert('功能二')">功能二</button>
+        <button class="big-button" onclick="alert('功能三')">功能三</button>
+        <button class="big-button" onclick="alert('功能四')">功能四</button>
         <button class="big-button" onclick="goToFishIntroduce()">饲养指南</button>
+        <button class="big-button" onclick="alert('预留')">预留</button>
     </div>
 
     <button class="info-button" onclick="openInfoModal()">!</button>
