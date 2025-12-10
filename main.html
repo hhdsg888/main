@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鱼类档案入口</title>
+    <link rel="stylesheet" href="../style.css"> <!-- 引用原有CSS -->
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #0f172a;
+            color: #e2e8f0;
+            flex-direction: column;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Arial', sans-serif;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('./clownfish-media1.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.25;
+            z-index: -1;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 50px;
+            text-align: center;
+            text-shadow: 0 2px 8px rgba(255, 255, 255, 0.524);
+            background: linear-gradient(90deg, #ffffff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            padding: 0 20px;
+        }
+
+        .button-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .big-button {
+            padding: 40px 30px;
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            min-width: 200px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .big-button:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        .big-button:active {
+            transform: translateY(-2px);
+        }
+
+        .big-button::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: -1;
+        }
+
+        .big-button:hover::after {
+            opacity: 1;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .button-container {
+                grid-template-columns: 1fr;
+                gap: 25px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+                margin-bottom: 30px;
+            }
+            
+            .big-button {
+                padding: 30px 20px;
+                font-size: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.7rem;
+            }
+            
+            .big-button {
+                padding: 25px 15px;
+                font-size: 18px;
+            }
+        }
+
+        .bg-btn {
+            padding: 8px 16px;
+            background-color: rgba(59, 130, 246, 0.8);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .bg-btn:hover {
+            background-color: rgba(59, 130, 246, 1);
+        }
+
+                /* 右下角说明按钮样式 */
+                .info-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: transparent; /* 透明背景 */
+            border: 3px solid #ffffff; /* 白色边框 */
+            color: #ffffff; /* 白色感叹号 */
+            font-size: 32px; /* 增大感叹号大小 */
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s;
+            z-index: 100;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* 添加文字阴影增强可见性 */
+        }
+
+        /* 悬停效果 */
+        .info-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+            background-color: rgba(255, 255, 255, 0.1); /* 悬停时添加轻微白色背景 */
+            border-color: #f0f0f0; /* 悬停时边框变亮 */
+        }
+
+        /* 点击效果 */
+        .info-button:active {
+            transform: scale(0.95);
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* 说明弹窗样式 */
+        .info-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .info-content {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            position: relative;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .info-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #3b82f6;
+        }
+
+        .info-title {
+            font-size: 1.8rem;
+            color: #3b82f6;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.3s;
+            padding: 5px;
+        }
+
+        .close-btn:hover {
+            color: #f87171;
+        }
+
+        .info-body {
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+
+        .info-body p {
+            margin-bottom: 15px;
+        }
+
+        .info-list {
+            margin: 20px 0;
+            padding-left: 20px;
+        }
+
+        .info-list li {
+            margin-bottom: 10px;
+            color: #e2e8f0;
+        }
+
+        .info-footer {
+            margin-top: 25px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .info-modal.show {
+            display: flex;
+            animation: fadeIn 0.3s;
+        }
+
+        .info-content.show {
+            animation: slideUp 0.4s;
+        }
+        
+    </style>
+</head>
+<body>
+    <h1>海王鱼缸</h1>
+    
+    <div class="button-container">
+        <button class="big-button" onclick="alert('功能一：鱼类识别系统')">鱼类识别</button>
+        <button class="big-button" onclick="alert('功能二：生态分布图')">分布地图</button>
+        <button class="big-button" onclick="alert('功能三：鱼类介绍')">鱼类介绍</button>
+        <button class="big-button" onclick="goToFishIntroduce()">饲养指南</button>
+    </div>
+
+    <button class="info-button" onclick="openInfoModal()">!</button>
+
+    <div class="info-modal" id="infoModal">
+        <div class="info-content">
+            <div class="info-header">
+                <h2 class="info-title">海王鱼缸说明</h2>
+                <button class="close-btn" onclick="closeInfoModal()">×</button>
+            </div>
+            <div class="info-body">
+                <p>欢迎使用海王鱼缸系统！本系统提供全面的鱼类信息查询和管理功能。</p>
+                
+                <p><strong>主要功能：</strong></p>
+                <ul class="info-list">
+                    <li><strong>鱼类识别</strong> - 上传鱼类图片，系统自动识别种类</li>
+                    <li><strong>分布地图</strong> - 查看各类鱼在全球的分布情况</li>
+                    <li><strong>鱼类介绍</strong> - 介绍鱼类</li>
+                    <li><strong>饲养指南</strong> - 详细了解每种鱼的特征、习性，获取各类鱼类的饲养方法和注意事项</li>
+                </ul>
+                
+                <p><strong>使用提示：</strong></p>
+                <ul class="info-list">
+                    <li>所有功能按钮都有悬停效果提示</li>
+                    <li>系统支持响应式设计，适配各种设备</li>
+                    <li>如需帮助，请随时查看此说明</li>
+                </ul>
+            </div>
+            <div class="info-footer">
+                © 2025 海王鱼缸 | 版本 1.0.0
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 更改背景图片
+        function changeBackground(type) {
+            const body = document.body;
+            const url = backgroundOptions[type] || backgroundOptions.fish;
+            
+            // 创建渐变过渡效果
+            body.style.transition = 'background-color 0.5s';
+            body.style.backgroundColor = 'rgba(15, 23, 42, 0.9)';
+            
+            setTimeout(() => {
+                const beforeElement = document.querySelector('body::before');
+                // 修改背景图片
+                document.body.style.backgroundImage = `url(${url})`;
+                
+                // 恢复背景色
+                setTimeout(() => {
+                    body.style.backgroundColor = '#0f172a';
+                }, 300);
+            }, 300);
+        }
+
+        // 鱼类介绍页面跳转
+        function goToFishIntroduce() {
+            window.location.href = "../fishintroduce/fishintroduce.html";
+        }
+        
+        function openInfoModal() {
+            const modal = document.getElementById('infoModal');
+            modal.classList.add('show');
+            const content = modal.querySelector('.info-content');
+            content.classList.add('show');
+            
+            // 点击弹窗外部关闭
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeInfoModal();
+                }
+            });
+            
+            // 按ESC键关闭
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeInfoModal();
+                }
+            });
+        }
+
+        // 关闭说明弹窗
+        function closeInfoModal() {
+            const modal = document.getElementById('infoModal');
+            modal.classList.remove('show');
+            const content = modal.querySelector('.info-content');
+            content.classList.remove('show');
+            
+            // 移除事件监听器
+            document.removeEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeInfoModal();
+                }
+            });
+        }
+
+        // 页面加载时设置初始背景
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设置默认背景为鱼类背景
+            changeBackground('fish');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鱼类档案库</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 保持原有的样式不变 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* 左侧导航栏 */
+        .sidebar {
+            width: 300px;
+            background-color: #1e293b;
+            border-right: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .logo {
+            padding: 24px 20px;
+            background-color: #0f172a;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-icon {
+            color: #3b82f6;
+            font-size: 24px;
+        }
+        
+        .logo h1 {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .search-box {
+            padding: 16px 20px;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .search-container {
+            position: relative;
+        }
+        
+        .search-container i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 16px;
+        }
+        
+        .search-container input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            background-color: #334155;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        .search-container input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        
+        .fish-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 0;
+        }
+        
+        .fish-list-header {
+            padding: 8px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .fish-item {
+            padding: 14px 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 4px solid transparent;
+        }
+        
+        .fish-item:hover {
+            background-color: #334155;
+        }
+        
+        .fish-item.active {
+            background-color: #1e40af;
+            border-left-color: #3b82f6;
+        }
+        
+        .fish-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #475569;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #cbd5e1;
+            font-size: 12px;
+        }
+        
+        .fish-name {
+            font-size: 15px;
+            font-weight: 500;
+        }
+        
+        /* 右侧内容区 */
+        .main-content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .page-title h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+        
+        .page-title p {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #3b82f6;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* 鱼类详情卡片 */
+        .fish-detail-card {
+            background-color: #1e293b;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            display: none;
+        }
+        
+        .fish-detail-card.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fish-header {
+            padding: 24px;
+            background: linear-gradient(90deg, #1e40af, #3b82f6);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .fish-title h3 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .fish-title p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .fish-image {
+            width: auto;
+            height: auto;
+            border-radius: 0;
+            background: none;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .fish-content {
+            padding: 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+        }
+        
+        .info-section {
+            background-color: #0f172a;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #334155;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #3b82f6;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .section-title i {
+            font-size: 16px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .info-label {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+        
+        .info-value {
+            font-size: 15px;
+            font-weight: 500;
+            color: #e2e8f0;
+        }
+        
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background-color: #334155;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 60vh;
+            color: #64748b;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: #475569;
+        }
+        
+        .empty-state h3 {
+            font-size: 24px;
+            margin-bottom: 12px;
+            color: #cbd5e1;
+        }
+        
+        .empty-state p {
+            font-size: 16px;
+            max-width: 500px;
+            line-height: 1.6;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 1024px) {
+            .fish-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: 60vh;
+            }
+            
+            .main-content {
+                padding: 16px;
+            }
+            
+            .fish-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+            
+            .fish-image {
+                align-self: center;
+            }
+        }
+        
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .pagination .page-btn {
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            user-select: none;
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid transparent;
+            font-size: 13px;
+        }
+        .pagination .page-btn:hover { border-color: #475569; color: #e2e8f0; }
+        .pagination .page-btn.active { background: #1e40af; color: #fff; border-color: #3b82f6; }
+        .pagination .page-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+        
+        .back-btn {
+            background-color: #1e293b;
+            color: #94a3b8;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background-color: #334155;
+            color: #fff;
+            border-color: #3b82f6;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- 左侧导航栏 -->
+    <div class="sidebar">
+        <div class="logo">
+            <i class="fas fa-fish logo-icon"></i>
+            <h1>饲养指南</h1>
+        </div>
+        
+        <div class="search-box">
+            <div class="search-container">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="搜索鱼类名称...">
+            </div>
+        </div>
+        
+        <div class="fish-list-header">鱼类目录 (<span id="fishCount">0</span>种)</div>
+        <div class="fish-list" id="fishList">
+            <!-- 鱼类列表将通过JavaScript动态生成 -->
+        </div>
+        <div id="pagination" class="pagination" style="padding:8px 12px; display:flex; flex-wrap:wrap; gap:6px; justify-content:center;"></div>
+    </div>
+    
+    <!-- 右侧内容区 -->
+    <div class="main-content">
+        <div class="content-header">
+            <button id="backButton" class="back-btn"><i class="fas fa-arrow-left"></i> 返回主页面</button>
+            <div class="page-title">
+                <h2>详情</h2>
+                <p>点击左侧鱼类名称查看详细信息</p>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalFish">0</div>
+                    <div class="stat-label">鱼类总数</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 默认空状态 -->
+        <div class="empty-state" id="emptyState">
+            <i class="fas fa-water"></i>
+            <h3>选择一种鱼类</h3>
+            <p>点击左侧列表中的鱼类名称，查看其详细档案信息，包括饲养要求、水质参数、习性等。</p>
+        </div>
+        
+        <!-- 加载状态 -->
+        <div class="empty-state" id="loadingState" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i>
+            <h3>加载中</h3>
+            <p>正在加载鱼类数据，请稍候...</p>
+        </div>
+        
+        <!-- 错误状态 -->
+        <div class="empty-state" id="errorState" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>加载失败</h3>
+            <p>无法加载鱼类数据，请检查文件是否存在或刷新页面重试。</p>
+        </div>
+        
+        <!-- 鱼类详情卡片 -->
+        <div class="fish-detail-card" id="fishDetailCard">
+            <div class="fish-header">
+                <div class="fish-title">
+                    <h3 id="fishDetailName">T字短鲷</h3>
+                </div>
+                <div class="fish-image" id="fishImageContainer">
+                    <i class="fas fa-fish"></i>
+                </div>
+            </div>
+            
+            <div class="fish-content">
+                <!-- 基本信息 -->
+                <div class="info-section">
+                    <div class="section-title">
+                        <i class="fas fa-info-circle"></i>
+                        基本信息
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">科属</div>
+                            <div class="info-value" id="fishFamily">慈鲷科</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">原产地</div>
+                            <div class="info-value" id="fishOrigin">南美洲亚马逊流域</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">活动水层</div>
+                            <div class="info-value" id="fishLayer">中层</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">性格特点</div>
+                            <div class="info-value" id="fishTemperament">温和，有领地意识</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">饲养难度</div>
+                            <div class="info-value" id="fishDifficulty">中等</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">寿命年限</div>
+                            <div class="info-value" id="fishLifespan">2-4年</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 饲养要求 -->
+                <div class="info-section">
+                    <div class="section-title">
+                        <i class="fas fa-tint"></i>
+                        水质要求
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">适宜水温</div>
+                            <div class="info-value" id="fishTemperature">24-28℃</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">适宜pH值</div>
+                            <div class="info-value" id="fishPH">5.5-7.0</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">适宜硬度</div>
+                            <div class="info-value" id="fishHardness">3-10 dGH</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">水质要求</div>
+                            <div class="info-value" id="fishWaterReq">需要稳定水质，避免剧烈变化</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">光照要求</div>
+                            <div class="info-value" id="fishLight">中等光照</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">换水频率</div>
+                            <div class="info-value" id="fishWaterChange">每周1/4</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 饲养与习性 -->
+                <div class="info-section">
+                    <div class="section-title">
+                        <i class="fas fa-utensils"></i>
+                        饲养与习性
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">食物习性</div>
+                        <div class="info-value" id="fishDiet">小型活饵、颗粒饲料</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">混养建议</div>
+                        <div class="info-value" id="fishCompatibility">可与温和鱼混养，提供足够空间</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">繁殖方式</div>
+                        <div class="info-value" id="fishBreeding">洞穴繁殖</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">最小鱼缸</div>
+                        <div class="info-value" id="fishTankSize">40升</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">特殊要求</div>
+                        <div class="info-value" id="fishSpecial">需要稳定水质，避免剧烈变化</div>
+                    </div>
+                </div>
+                
+                <!-- 健康与养护 -->
+                <div class="info-section">
+                    <div class="section-title">
+                        <i class="fas fa-heartbeat"></i>
+                        健康与养护
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">疾病预防</div>
+                        <div class="info-value" id="fishDiseasePrevention">保持水质稳定，定期检疫，避免过度喂食</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+        <script>
+        let fishData = [];
+        let filteredData = [];  
+        let itemsPerPage = 12;
+        let currentPage = 1;       
+
+        const fishList = document.getElementById('fishList');
+        const searchInput = document.getElementById('searchInput');
+        const emptyState = document.getElementById('emptyState');
+        const loadingState = document.getElementById('loadingState');
+        const errorState = document.getElementById('errorState');
+        const fishDetailCard = document.getElementById('fishDetailCard');
+        const paginationDiv = document.getElementById('pagination');
+        
+        const fishCount = document.getElementById('fishCount');
+        const totalFish = document.getElementById('totalFish');
+        const cichlidaeCount = document.getElementById('cichlidaeCount');
+        const characidaeCount = document.getElementById('characidaeCount');
+        
+        /* 详情字段 */
+        const fishDetailName = document.getElementById('fishDetailName');
+        const fishFamily = document.getElementById('fishFamily');
+        const fishOrigin = document.getElementById('fishOrigin');
+        const fishLayer = document.getElementById('fishLayer');
+        const fishTemperament = document.getElementById('fishTemperament');
+        const fishDifficulty = document.getElementById('fishDifficulty');
+        const fishLifespan = document.getElementById('fishLifespan');
+        const fishTemperature = document.getElementById('fishTemperature');
+        const fishPH = document.getElementById('fishPH');
+        const fishHardness = document.getElementById('fishHardness');
+        const fishWaterReq = document.getElementById('fishWaterReq');
+        const fishLight = document.getElementById('fishLight');
+        const fishWaterChange = document.getElementById('fishWaterChange');
+        const fishDiet = document.getElementById('fishDiet');
+        const fishCompatibility = document.getElementById('fishCompatibility');
+        const fishBreeding = document.getElementById('fishBreeding');
+        const fishTankSize = document.getElementById('fishTankSize');
+        const fishSpecial = document.getElementById('fishSpecial');
+        const fishDiseasePrevention = document.getElementById('fishDiseasePrevention');
+        
+        async function fetchFishData() {
+            try {
+                emptyState.style.display = 'none';
+                errorState.style.display = 'none';
+                loadingState.style.display = 'flex';
+        
+                const response = await fetch('fishintroduce.csv');
+                if (!response.ok) throw new Error('CSV 文件无法加载');
+        
+                const csvText = await response.text();
+                fishData = parseCSV(csvText);
+                filteredData = fishData;
+        
+                updateStats();
+                initFishList();
+        
+                loadingState.style.display = 'none';
+            } catch (e) {
+                console.error(e);
+                loadingState.style.display = 'none';
+                errorState.style.display = 'flex';
+            }
+        }
+        
+        function getGlobalIndex(localIndex) {
+            // 将当前页面索引转换为全局索引
+            const start = (currentPage - 1) * itemsPerPage;
+            return start + localIndex;
+        }
+
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n').filter(x => x.trim() !== '');
+            if (lines.length === 0) return [];
+        
+            const allowedColumns = [
+                "鱼类名称","科属","原产地","适宜水温","适宜pH值","适宜硬度","光照要求",
+                "换水频率","食物习性","饲养难度","混养建议","繁殖方式","特殊要求","水质要求",
+                "活动水层","性格特点","疾病预防","寿命年限","最小鱼缸","类型"
+            ];
+        
+            const headers = lines[0].split(',').map(h => h.trim());
+            const indexMap = {};
+            allowedColumns.forEach(col => indexMap[col] = headers.indexOf(col));
+        
+            const data = [];
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => v.trim());
+                const fish = {};
+                allowedColumns.forEach(col => {
+                    const idx = indexMap[col];
+                    fish[col] = (idx >= 0 && values[idx]) ? values[idx] : "无";
+                });
+                data.push(fish);
+            }
+            return data;
+        }
+
+        function updateStats() {
+            const total = filteredData.length;
+            fishCount.textContent = total;
+            totalFish.textContent = total;
+
+        }
+
+        function initFishList() {
+            currentPage = 1;
+            renderFishPage();
+            renderPagination();
+        }
+        
+        function renderFishPage() {
+            fishList.innerHTML = "";   // 清空
+        
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = Math.min(currentPage * itemsPerPage, filteredData.length);
+            const pageData = filteredData.slice(start, end);
+        
+            pageData.forEach((fish, index) => {
+                const div = document.createElement('div');
+                div.className = "fish-item";
+                div.dataset.id = start + index;
+        
+                div.innerHTML = `
+                    <div class="fish-icon"><i class="fas fa-fish"></i></div>
+                    <div class="fish-name">${fish["鱼类名称"]}</div>
+                `;
+        
+                div.addEventListener('click', () => {
+                    document.querySelectorAll('.fish-item').forEach(x => x.classList.remove('active'));
+                    div.classList.add('active');
+                    const globalIndex = getGlobalIndex(index);
+                    showFishDetail(globalIndex);
+                });
+        
+                fishList.appendChild(div);
+            });
+        }
+        
+        function renderPagination() {
+            paginationDiv.innerHTML = "";
+        
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+        
+            function addBtn(label, page, disabled = false, active = false) {
+                const b = document.createElement("div");
+                b.className = "page-btn";
+                if (active) b.classList.add("active");
+                if (disabled) b.classList.add("disabled");
+        
+                b.textContent = label;
+        
+                if (!disabled) {
+                    b.onclick = () => {
+                        currentPage = page;
+                        renderFishPage();
+                        renderPagination();
+                    };
+                }
+                paginationDiv.appendChild(b);
+            }
+
+            addBtn("<", currentPage - 1, currentPage === 1);
+
+            if (totalPages <= 12) {
+                for (let p = 1; p <= totalPages; p++) {
+                    addBtn(p, p, false, p === currentPage);
+                }
+            } else {
+                addBtn(1, 1, false, currentPage === 1);
+                addBtn(2, 2, false, currentPage === 2);
+        
+                if (currentPage > 4) paginationDiv.appendChild(makeDots());
+        
+                const start = Math.max(3, currentPage - 2);
+                const end = Math.min(totalPages - 2, currentPage + 2);
+        
+                for (let p = start; p <= end; p++) {
+                    addBtn(p, p, false, p === currentPage);
+                }
+        
+                if (currentPage < totalPages - 3) paginationDiv.appendChild(makeDots());
+        
+                addBtn(totalPages - 1, totalPages - 1, false, currentPage === totalPages - 1);
+                addBtn(totalPages, totalPages, false, currentPage === totalPages);
+            }
+        
+            addBtn(">", currentPage + 1, currentPage === totalPages);
+        }
+        
+        function makeDots() {
+            const d = document.createElement("div");
+            d.className = "page-btn disabled";
+            d.textContent = "...";
+            return d;
+        }
+        
+        function showFishDetail(index) {
+            const fish = filteredData[index];
+            if (!fish) return;
+        
+            emptyState.style.display = 'none';
+            fishDetailCard.classList.add('active');
+        
+            fishDetailName.textContent = fish["鱼类名称"];
+            fishFamily.textContent = fish["科属"];
+            fishOrigin.textContent = fish["原产地"];
+            fishLayer.textContent = fish["活动水层"];
+            fishTemperament.textContent = fish["性格特点"];
+            fishDifficulty.textContent = fish["饲养难度"];
+            fishLifespan.textContent = fish["寿命年限"];
+            fishTemperature.textContent = fish["适宜水温"];
+            fishPH.textContent = fish["适宜pH值"];
+            fishHardness.textContent = fish["适宜硬度"];
+            fishWaterReq.textContent = fish["水质要求"];
+            fishLight.textContent = fish["光照要求"];
+            fishWaterChange.textContent = fish["换水频率"];
+            fishDiet.textContent = fish["食物习性"];
+            fishCompatibility.textContent = fish["混养建议"];
+            fishBreeding.textContent = fish["繁殖方式"];
+            fishTankSize.textContent = fish["最小鱼缸"];
+            fishSpecial.textContent = fish["特殊要求"];
+            fishDiseasePrevention.textContent = fish["疾病预防"];
+            loadFishImage(fish["鱼类名称"]);
+        }
+        
+        searchInput.addEventListener("input", () => {
+            const keyword = searchInput.value.trim().toLowerCase();
+
+            // 搜索全部数据，而不是当前页
+            filteredData = fishData.filter(fish =>
+                fish["鱼类名称"].toLowerCase().includes(keyword)
+            );
+
+            currentPage = 1; // 搜索后从第 1 页开始
+
+            updateStats();
+            renderFishPage();
+            renderPagination();
+
+            fishDetailCard.classList.remove('active');
+            emptyState.style.display = 'flex';
+        });
+
+        
+        function loadFishImage(name) {
+            const container = document.getElementById("fishImageContainer");
+            container.innerHTML = "";  // 清空旧内容
+
+            const img = document.createElement("img");
+            img.src = `picture/${name}.jpg`;
+            img.style.width = "200px";
+            img.style.height = "200px";
+            img.style.objectFit = "contain";
+            img.style.borderRadius = "12px";
+
+            // 若图片不存在就显示默认图标
+            img.onerror = () => {
+                container.innerHTML = `<i class="fas fa-fish" style="font-size:48px;"></i>`;
+            };
+
+            container.appendChild(img);
+        }
+
+        document.addEventListener("DOMContentLoaded", fetchFishData);
+        
+        document.getElementById('backButton').addEventListener('click', () => {
+            window.location.href = '../main.html'; 
+        });
+
+        </script>
+</body>
+</html>
