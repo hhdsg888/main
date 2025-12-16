@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>传感器数据监控</title>
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --secondary-color: #8b5cf6;
+            --dark-bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-light: #e2e8f0;
+            --text-muted: #94a3b8;
+            --healthy-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --border-color: #334155;
+            --hover-bg: #2d3748;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+        
+        .header {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+        
+        .content {
+            display: flex;
+            min-height: 600px;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background-color: var(--dark-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 24px 0;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 32px;
+        }
+        
+        .category-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-light);
+            padding: 12px 32px;
+            border-left: 4px solid var(--primary-color);
+            background-color: rgba(59, 130, 246, 0.05);
+            margin-bottom: 16px;
+        }
+        
+        .sensor-list {
+            list-style: none;
+        }
+        
+        .sensor-item {
+            padding: 16px 32px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .sensor-item:hover {
+            background-color: var(--hover-bg);
+        }
+        
+        .sensor-item.active {
+            background-color: rgba(59, 130, 246, 0.15);
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        .sensor-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            background-color: rgba(59, 130, 246, 0.2);
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .sensor-name {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-light);
+        }
+        
+        .sensor-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding: 20px;
+            background-color: var(--dark-bg);
+            border-radius: 10px;
+            border-left: 4px solid var(--primary-color);
+            border: 1px solid var(--border-color);
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .status-ok {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--healthy-color);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .status-stopped {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--danger-color);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        .status-no-data {
+            background-color: rgba(245, 158, 11, 0.15);
+            color: var(--warning-color);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        
+        .timestamp {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        
+        .sensor-readings {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 24px;
+        }
+        
+        .reading-card {
+            background-color: var(--dark-bg);
+            border-radius: 10px;
+            padding: 24px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .reading-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+            border-color: var(--primary-color);
+        }
+        
+        .reading-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .reading-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+        
+        .reading-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 12px 0;
+        }
+        
+        .reading-unit {
+            font-size: 16px;
+            color: var(--text-muted);
+            margin-left: 4px;
+        }
+        
+        .reading-trend {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 8px;
+        }
+        
+        .trend-up {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--danger-color);
+        }
+        
+        .trend-down {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--healthy-color);
+        }
+        
+        .trend-neutral {
+            background-color: rgba(59, 130, 246, 0.15);
+            color: var(--primary-color);
+        }
+        
+        .meta-section {
+            margin-top: 40px;
+            padding: 20px;
+            background-color: var(--dark-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .meta-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-light);
+        }
+        
+        .meta-content {
+            font-family: 'Courier New', monospace;
+            background-color: rgba(30, 41, 59, 0.5);
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 14px;
+            color: var(--text-light);
+            border: 1px solid var(--border-color);
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 16px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+        
+        .btn-secondary:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+        
+        .btn-refresh {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .refresh-icon {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: var(--text-muted);
+        }
+        
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        .reading-card p {
+            color: var(--text-muted);
+            margin-top: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .sensor-status h2 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: var(--text-light);
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+            
+            .sensor-readings {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>传感器数据监控</h1>
+            <p>实时获取和显示传感器读数，监控水质参数</p>
+        </div>
+        
+        <div class="content">
+            <div class="sidebar">
+                <div class="category-title">传感器列表</div>
+                <ul class="sensor-list">
+                    <li class="sensor-item active" data-sensor="tds">
+                        <div class="sensor-icon">TDS</div>
+                        <div class="sensor-name">TDS (PPM)</div>
+                    </li>
+                    <li class="sensor-item" data-sensor="temp">
+                        <div class="sensor-icon">T</div>
+                        <div class="sensor-name">温度 (°C)</div>
+                    </li>
+                    <li class="sensor-item" data-sensor="ph">
+                        <div class="sensor-icon">pH</div>
+                        <div class="sensor-name">pH值</div>
+                    </li>
+                    <li class="sensor-item" data-sensor="do">
+                        <div class="sensor-icon">DO</div>
+                        <div class="sensor-name">溶解氧 (mg/L)</div>
+                    </li>
+                    <li class="sensor-item" data-sensor="ec">
+                        <div class="sensor-icon">EC</div>
+                        <div class="sensor-name">电导率 (μS/cm)</div>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="main-content">
+                <div class="sensor-status">
+                    <div>
+                        <h2>传感器状态</h2>
+                        <div class="status-indicator status-ok" id="statusIndicator">运行正常</div>
+                    </div>
+                </div>
+                
+                <div id="readingsContainer">
+                    <!-- 传感器读数将动态加载到这里 -->
+                    <div class="sensor-readings">
+                        <div class="reading-card">
+                            <div class="reading-header">
+                                <div class="reading-title">TDS (PPM)</div>
+                                <div class="reading-trend trend-neutral">稳定</div>
+                            </div>
+                            <div class="reading-value">123.4<span class="reading-unit">PPM</span></div>
+                            <p>总溶解固体浓度，反映水质纯度</p>
+                        </div>
+                        
+                        <div class="reading-card">
+                            <div class="reading-header">
+                                <div class="reading-title">温度 (°C)</div>
+                                <div class="reading-trend trend-up">↑ 0.2°C</div>
+                            </div>
+                            <div class="reading-value">25.6<span class="reading-unit">°C</span></div>
+                            <p>当前水温，适宜鱼类生存</p>
+                        </div>
+                    </div>
+                    
+                    <div class="meta-section">
+                        <div class="meta-title">元数据</div>
+                        <div class="meta-content" id="metaData">
+{
+  "sensor_model": "AquaMonitor Pro",
+  "firmware_version": "2.1.4",
+  "calibration_date": "2024-11-20",
+  "update_interval": 5,
+  "battery_level": 87
+}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button class="btn btn-secondary" id="historyBtn">查看历史数据</button>
+                    <button class="btn btn-primary btn-refresh" id="refreshBtn">
+                        <span class="refresh-icon">↻</span> 刷新数据
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟传感器数据
+        const sensorData = {
+            "status": "ok",
+            "timestamp": 1734333333.12,
+            "readings": {
+                "TDS (PPM)": 123.4,
+                "Temperature (C)": 25.6,
+                "pH": 7.2,
+                "Dissolved Oxygen (mg/L)": 8.1,
+                "Conductivity (μS/cm)": 450
+            },
+            "meta": {
+                "sensor_model": "AquaMonitor Pro",
+                "firmware_version": "2.1.4",
+                "calibration_date": "2024-11-20",
+                "update_interval": 5,
+                "battery_level": 87
+            }
+        };
+        
+        // 模拟服务未启动状态
+        const stoppedData = {
+            "status": "stopped",
+            "error": "传感器服务未运行",
+            "timestamp": 1734333333.12,
+            "readings": {},
+            "meta": {}
+        };
+        
+        // 模拟无数据状态
+        const noData = {
+            "status": "no_data",
+            "timestamp": 1734333333.12,
+            "readings": {},
+            "meta": {}
+        };
+        
+        // 当前显示的数据状态
+        let currentStatus = "ok";
+        
+        // DOM元素
+        const statusIndicator = document.getElementById('statusIndicator');
+        const timestampElement = document.getElementById('timestamp');
+        const readingsContainer = document.getElementById('readingsContainer');
+        const metaDataElement = document.getElementById('metaData');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const historyBtn = document.getElementById('historyBtn');
+        const sensorItems = document.querySelectorAll('.sensor-item');
+        
+        // 格式化时间戳
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+        
+        // 根据状态更新UI
+        function updateStatus(status) {
+            currentStatus = status;
+            
+            // 更新状态指示器
+            statusIndicator.className = 'status-indicator';
+            
+            if (status === 'ok') {
+                statusIndicator.classList.add('status-ok');
+                statusIndicator.textContent = '运行正常';
+            } else if (status === 'stopped') {
+                statusIndicator.classList.add('status-stopped');
+                statusIndicator.textContent = '服务未运行';
+            } else if (status === 'no_data') {
+                statusIndicator.classList.add('status-no-data');
+                statusIndicator.textContent = '无数据';
+            }
+        }
+        
+        // 渲染传感器读数
+        function renderReadings(data) {
+            const readings = data.readings;
+            const meta = data.meta;
+            
+            // 更新时间戳
+            timestampElement.textContent = `最后更新: ${formatTimestamp(data.timestamp)}`;
+            
+            // 如果没有读数数据
+            if (Object.keys(readings).length === 0) {
+                readingsContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>${data.status === 'stopped' ? data.error : '正在等待传感器数据...'}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 创建读数卡片
+            let readingsHTML = '<div class="sensor-readings">';
+            
+            // 定义每个传感器的单位和描述
+            const sensorInfo = {
+                "TDS (PPM)": { unit: "PPM", desc: "总溶解固体浓度，反映水质纯度" },
+                "Temperature (C)": { unit: "°C", desc: "当前水温，适宜鱼类生存" },
+                "pH": { unit: "", desc: "酸碱度指标，影响鱼类健康" },
+                "Dissolved Oxygen (mg/L)": { unit: "mg/L", desc: "溶解氧含量，关键生存指标" },
+                "Conductivity (μS/cm)": { unit: "μS/cm", desc: "电导率，反映水中离子浓度" }
+            };
+            
+            // 为每个读数生成卡片
+            for (const [key, value] of Object.entries(readings)) {
+                const info = sensorInfo[key] || { unit: "", desc: "传感器读数" };
+                
+                // 随机生成趋势（仅演示用）
+                const trends = ['trend-up', 'trend-down', 'trend-neutral'];
+                const trendClasses = trends[Math.floor(Math.random() * trends.length)];
+                const trendTexts = {
+                    'trend-up': `↑ ${(Math.random() * 0.5).toFixed(1)}${info.unit}`,
+                    'trend-down': `↓ ${(Math.random() * 0.3).toFixed(1)}${info.unit}`,
+                    'trend-neutral': '稳定'
+                };
+                
+                readingsHTML += `
+                    <div class="reading-card">
+                        <div class="reading-header">
+                            <div class="reading-title">${key}</div>
+                            <div class="reading-trend ${trendClasses}">${trendTexts[trendClasses]}</div>
+                        </div>
+                        <div class="reading-value">${value}<span class="reading-unit">${info.unit}</span></div>
+                        <p>${info.desc}</p>
+                    </div>
+                `;
+            }
+            
+            readingsHTML += '</div>';
+            
+            // 添加元数据部分
+            readingsHTML += `
+                <div class="meta-section">
+                    <div class="meta-title">元数据</div>
+                    <div class="meta-content">${JSON.stringify(meta, null, 2)}</div>
+                </div>
+            `;
+            
+            readingsContainer.innerHTML = readingsHTML;
+            
+            // 更新元数据显示
+            const metaDisplay = document.querySelector('.meta-content');
+            if (metaDisplay) {
+                metaDisplay.textContent = JSON.stringify(meta, null, 2);
+            }
+        }
+        
+        // 加载传感器数据
+        function loadSensorData(status = 'ok') {
+            updateStatus(status);
+            
+            // 根据状态选择数据
+            let data;
+            if (status === 'ok') {
+                data = sensorData;
+            } else if (status === 'stopped') {
+                data = stoppedData;
+            } else {
+                data = noData;
+            }
+            
+            // 渲染数据
+            renderReadings(data);
+        }
+        
+        // 切换传感器数据状态（演示用）
+        function cycleStatus() {
+            const statuses = ['ok', 'stopped', 'no_data'];
+            const currentIndex = statuses.indexOf(currentStatus);
+            const nextIndex = (currentIndex + 1) % statuses.length;
+            loadSensorData(statuses[nextIndex]);
+        }
+        
+        // 初始化
+        function init() {
+            // 加载初始数据
+            loadSensorData('ok');
+            
+            // 绑定刷新按钮事件
+            refreshBtn.addEventListener('click', function() {
+                // 添加旋转动画
+                const icon = this.querySelector('.refresh-icon');
+                icon.style.animation = 'spin 0.5s linear';
+                
+                // 模拟API请求延迟
+                setTimeout(() => {
+                    // 随机切换状态（演示用）
+                    const statuses = ['ok', 'stopped', 'no_data'];
+                    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+                    loadSensorData(randomStatus);
+                    
+                    // 移除动画
+                    icon.style.animation = '';
+                }, 500);
+            });
+            
+            // 绑定历史数据按钮事件
+            historyBtn.addEventListener('click', function() {
+                alert('历史数据功能正在开发中...');
+            });
+            
+            // 绑定传感器列表项点击事件
+            sensorItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // 移除所有active类
+                    sensorItems.forEach(i => i.classList.remove('active'));
+                    // 为当前项添加active类
+                    this.classList.add('active');
+                    
+                    // 这里可以添加加载特定传感器详细数据的逻辑
+                    const sensorType = this.getAttribute('data-sensor');
+                    console.log(`切换到传感器: ${sensorType}`);
+                });
+            });
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

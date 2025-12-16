@@ -296,8 +296,8 @@
     <h1>海王鱼缸</h1>
     
     <div class="button-container">
-        <button class="big-button" onclick="alert('功能一')">功能一</button>
-        <button class="big-button" onclick="alert('功能二')">功能二</button>
+        <button class="big-button" onclick="goToCamera()">鱼缸监控</button>
+        <button class="big-button" onclick="goTosensor()">数据监测</button>
         <button class="big-button" onclick="alert('功能三')">功能三</button>
         <button class="big-button" onclick="alert('功能四')">功能四</button>
         <button class="big-button" onclick="goToFishIntroduce()">饲养指南</button>
@@ -362,7 +362,15 @@
         function goToFishIntroduce() {
             window.location.href = "../fishintroduce/fishintroduce.html";
         }
+
+        function goToCamera(){
+            window.location.href = "./camera.html";
+        }
         
+        function goTosensor(){
+            window.location.href = "./sensor.html";
+        }
+
         function openInfoModal() {
             const modal = document.getElementById('infoModal');
             modal.classList.add('show');
