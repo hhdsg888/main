@@ -297,11 +297,8 @@
     
     <div class="button-container">
         <button class="big-button" onclick="goToCamera()">鱼缸监控</button>
-        <button class="big-button" onclick="goTosensor()">数据监测</button>
-        <button class="big-button" onclick="alert('功能三')">功能三</button>
-        <button class="big-button" onclick="alert('功能四')">功能四</button>
+        <button class="big-button" onclick="goToRollback()">记录查询</button>
         <button class="big-button" onclick="goToFishIntroduce()">饲养指南</button>
-        <button class="big-button" onclick="alert('预留')">预留</button>
     </div>
 
     <button class="info-button" onclick="openInfoModal()">!</button>
@@ -317,9 +314,8 @@
                 
                 <p><strong>主要功能：</strong></p>
                 <ul class="info-list">
-                    <li><strong>鱼类识别</strong> - 上传鱼类图片，系统自动识别种类</li>
-                    <li><strong>分布地图</strong> - 查看各类鱼在全球的分布情况</li>
-                    <li><strong>鱼类介绍</strong> - 介绍鱼类</li>
+                    <li><strong>鱼缸监控</strong> - 实时监控鱼类状况，系统自动识别种类</li>
+                    <li><strong>记录查询</strong> - 查看鱼类状况历史记录</li>
                     <li><strong>饲养指南</strong> - 详细了解每种鱼的特征、习性，获取各类鱼类的饲养方法和注意事项</li>
                 </ul>
                 
@@ -366,9 +362,9 @@
         function goToCamera(){
             window.location.href = "./camera.html";
         }
-        
-        function goTosensor(){
-            window.location.href = "./sensor.html";
+
+        function goToRollback(){
+            window.location.href = "./rollback.html";
         }
 
         function openInfoModal() {
