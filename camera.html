@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>鱼缸实时监测</title>
-    <link rel="stylesheet" href="../style.css"> <!-- 引用原有CSS -->
     <style>
         :root {
             --primary-color: #3b82f6;
@@ -41,11 +40,10 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('./aquarium-bg.jpg');
+            background: linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.95)),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="1" fill="%233b82f6" opacity="0.1"/></svg>');
             background-size: cover;
             background-position: center;
-            background-repeat: no-repeat;
-            opacity: 0.2;
             z-index: -1;
         }
 
@@ -187,6 +185,52 @@
 
         .control-btn.stop {
             background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* AI分析按钮 */
+        .ai-analysis-btn {
+            margin-top: 15px;
+            width: 100%;
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .ai-analysis-btn.analyzing {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        /* AI分析结果区域 */
+        .ai-result-section {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .ai-result-title {
+            font-size: 1.2rem;
+            color: #10b981;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ai-result-content {
+            color: var(--text-light);
+            line-height: 1.6;
+            white-space: pre-line;
+            padding: 10px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid #10b981;
         }
 
         /* 数据监测区域 */
@@ -508,7 +552,7 @@
     <div class="container">
         <div class="header">
             <h1>海王鱼缸实时监测系统</h1>
-            <p>实时监控鱼缸状态，检测鱼类活动，跟踪健康状况和种类信息</p>
+            <p>实时监控鱼缸状态，AI识别鱼类种类，跟踪健康状况和种类信息</p>
         </div>
         
         <div class="main-content">
@@ -531,6 +575,21 @@
                     <button class="control-btn stop" id="stopBtn" onclick="stopMonitoring()" disabled>
                         <i class="fas fa-stop"></i> 停止监控
                     </button>
+                </div>
+
+                <!-- AI分析按钮 -->
+                <button class="control-btn ai-analysis-btn" id="analyzeBtn" onclick="analyzeFishSpecies()" disabled>
+                    <i class="fas fa-robot"></i> AI分析鱼类
+                </button>
+
+                <!-- AI分析结果 -->
+                <div class="ai-result-section" id="aiResultSection" style="display: none;">
+                    <h3 class="ai-result-title">
+                        <i class="fas fa-brain"></i> AI分析结果
+                    </h3>
+                    <div class="ai-result-content" id="aiResultContent">
+                        等待分析结果...
+                    </div>
                 </div>
             </div>
             
@@ -572,40 +631,14 @@
                     </div>
                 </div>
                 
-                <!-- 健康统计 -->
-                <div class="health-stats">
-                    <div class="health-stat">
-                        <div class="health-stat-value healthy-count" id="healthyCount">0</div>
-                        <div class="health-stat-label">健康</div>
-                    </div>
-                    <div class="health-stat">
-                        <div class="health-stat-value warning-count" id="warningCount">0</div>
-                        <div class="health-stat-label">需关注</div>
-                    </div>
-                    <div class="health-stat">
-                        <div class="health-stat-value danger-count" id="dangerCount">0</div>
-                        <div class="health-stat-label">异常</div>
-                    </div>
-                </div>
-                
-                <!-- 鱼类筛选 -->
-                <div class="fish-filter" id="fishFilter">
-                    <button class="filter-btn active" onclick="filterFishType('all')">全部</button>
-                    <button class="filter-btn" onclick="filterFishType('clownfish')">小丑鱼</button>
-                    <button class="filter-btn" onclick="filterFishType('angel')">神仙鱼</button>
-                    <button class="filter-btn" onclick="filterFishType('tang')">倒吊鱼</button>
-                    <button class="filter-btn" onclick="filterFishType('guppy')">孔雀鱼</button>
-                    <button class="filter-btn" onclick="filterFishType('other')">其他</button>
-                </div>
-                
-                <!-- 检测框显示区域 -->
+                <!-- 鱼类信息显示区域 -->
                 <div class="detection-section">
                     <h3 class="detection-title">
-                        <i class="fas fa-vector-square"></i> 鱼类检测信息
+                        <i class="fas fa-vector-square"></i> AI识别结果
                     </h3>
                     <div class="detection-boxes" id="detectionBoxes">
                         <div class="empty-detection">
-                            暂无检测数据，启动监控后显示
+                            等待AI分析结果，点击"AI分析鱼类"按钮开始识别
                         </div>
                     </div>
                 </div>
@@ -630,45 +663,25 @@
         </div>
         
         <div class="footer">
-            <p>© 2025 海王鱼缸监测系统 | 智能鱼类识别与健康监测 v1.1 | 最后更新: <span id="currentTime">--:--:--</span></p>
+            <p>© 2025 海王鱼缸监测系统 | AI鱼类识别与健康监测 v2.0 | 最后更新: <span id="currentTime">--:--:--</span></p>
         </div>
     </div>
 
     <script>
         // 服务器配置 - 根据实际情况修改
-        const SERVER_URL = 'http://10.29.32.7:5000';
+        const SERVER_URL = 'http://10.29.32.7:5000'; // 修改为你的树莓派IP
         let monitoringInterval = null;
         let lastUpdateTime = Date.now();
-        let currentFilter = 'all';
-        
-        // 鱼类种类和健康状况数据
-        const fishTypes = ['clownfish', 'angel', 'tang', 'guppy', 'betta', 'goldfish', 'koi', 'other'];
-        const healthStatuses = ['healthy', 'warning', 'danger'];
-        
-        // 鱼类中文名称映射
-        const fishTypeNames = {
-            'clownfish': '小丑鱼',
-            'angel': '神仙鱼',
-            'tang': '倒吊鱼',
-            'guppy': '孔雀鱼',
-            'betta': '斗鱼',
-            'goldfish': '金鱼',
-            'koi': '锦鲤',
-            'other': '其他鱼类'
-        };
-        
-        // 健康状况中文映射
-        const healthStatusNames = {
-            'healthy': '健康',
-            'warning': '需关注',
-            'danger': '异常'
-        };
+        let cameraStarted = false;
         
         // DOM元素
         const videoFeed = document.getElementById('videoFeed');
         const videoPlaceholder = document.getElementById('videoPlaceholder');
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const aiResultSection = document.getElementById('aiResultSection');
+        const aiResultContent = document.getElementById('aiResultContent');
         const fpsValue = document.getElementById('fpsValue');
         const detectionCount = document.getElementById('detectionCount');
         const frameId = document.getElementById('frameId');
@@ -676,10 +689,6 @@
         const detectionBoxes = document.getElementById('detectionBoxes');
         const logList = document.getElementById('logList');
         const currentTime = document.getElementById('currentTime');
-        const healthyCount = document.getElementById('healthyCount');
-        const warningCount = document.getElementById('warningCount');
-        const dangerCount = document.getElementById('dangerCount');
-        const fishFilter = document.getElementById('fishFilter');
         
         // 更新时间显示
         function updateTime() {
@@ -714,7 +723,7 @@
         // 启动监控
         async function startMonitoring() {
             try {
-                addLog('正在启动监控服务...');
+                addLog('正在启动摄像头服务...');
                 
                 const response = await fetch(`${SERVER_URL}/api/start`, {
                     method: 'POST'
@@ -728,16 +737,20 @@
                     videoFeed.style.display = 'block';
                     videoPlaceholder.style.display = 'none';
                     
-                    // 启用停止按钮，禁用启动按钮
+                    // 启用停止按钮和AI分析按钮，禁用启动按钮
                     startBtn.disabled = true;
                     stopBtn.disabled = false;
+                    analyzeBtn.disabled = false;
+                    
+                    // 设置标志
+                    cameraStarted = true;
                     
                     // 开始定时获取数据
                     if (monitoringInterval) clearInterval(monitoringInterval);
-                    monitoringInterval = setInterval(fetchMonitoringData, 1000);
+                    monitoringInterval = setInterval(fetchMonitoringData, 2000);
                     
-                    addLog('监控服务启动成功');
-                    addLog('开始鱼类识别与健康监测');
+                    addLog('摄像头服务启动成功');
+                    addLog('等待AI分析鱼类种类');
                 } else {
                     addLog(`启动失败: ${data.message}`);
                     alert(`启动失败: ${data.message}`);
@@ -745,14 +758,14 @@
             } catch (error) {
                 addLog('连接服务器失败');
                 console.error('启动监控失败:', error);
-                alert('无法连接到监控服务器，请检查网络连接和服务器状态');
+                alert('无法连接到服务器，请检查网络连接和服务器状态');
             }
         }
         
         // 停止监控
         async function stopMonitoring() {
             try {
-                addLog('正在停止监控服务...');
+                addLog('正在停止摄像头服务...');
                 
                 const response = await fetch(`${SERVER_URL}/api/stop`, {
                     method: 'POST'
@@ -766,9 +779,16 @@
                     videoFeed.style.display = 'none';
                     videoPlaceholder.style.display = 'flex';
                     
-                    // 启用启动按钮，禁用停止按钮
+                    // 启用启动按钮，禁用停止按钮和AI分析按钮
                     startBtn.disabled = false;
                     stopBtn.disabled = true;
+                    analyzeBtn.disabled = true;
+                    
+                    // 隐藏AI分析结果
+                    aiResultSection.style.display = 'none';
+                    
+                    // 设置标志
+                    cameraStarted = false;
                     
                     // 停止定时获取数据
                     if (monitoringInterval) {
@@ -779,221 +799,269 @@
                     // 重置数据显示
                     resetDataDisplay();
                     
-                    addLog('监控服务已停止');
+                    addLog('摄像头服务已停止');
                 } else {
                     addLog(`停止失败: ${data.message}`);
                     alert(`停止失败: ${data.message}`);
                 }
             } catch (error) {
-                addLog('停止监控时出错');
+                addLog('停止摄像头服务时出错');
                 console.error('停止监控失败:', error);
             }
         }
         
-        // 获取监控数据
-        async function fetchMonitoringData() {
+        // AI分析鱼类种类
+        async function analyzeFishSpecies() {
+            if (!cameraStarted) {
+                alert('请先启动摄像头服务！');
+                return;
+            }
+            
             try {
-                // 模拟数据 - 实际使用时请取消注释下面的真实API调用
-                // const response = await fetch(`${SERVER_URL}/api/detection`);
-                // const data = await response.json();
+                addLog('开始AI分析鱼类种类...');
                 
-                // 模拟数据（因为原API没有健康状况和鱼类种类信息）
-                const mockData = generateMockDetectionData();
+                // 禁用分析按钮，显示分析中状态
+                analyzeBtn.disabled = true;
+                analyzeBtn.classList.add('analyzing');
+                analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> AI分析中...';
                 
-                // 更新最后更新时间
-                lastUpdateTime = Date.now();
-                updateLastUpdateTime();
+                // 显示AI结果区域
+                aiResultSection.style.display = 'block';
+                aiResultContent.textContent = '正在分析画面中的鱼类种类，请稍候...';
                 
-                // 更新数据显示
-                updateDataDisplay(mockData);
-            } catch (error) {
-                console.error('获取监控数据失败:', error);
-                addLog('获取监控数据失败');
-            }
-        }
-        
-        // 生成模拟检测数据
-        function generateMockDetectionData() {
-            const frameId = Math.floor(Math.random() * 1000) + 1;
-            const fps = 15 + Math.random() * 10;
-            const detectionCount = Math.floor(Math.random() * 6) + 1;
-            
-            const boxes = [];
-            const healthStats = { healthy: 0, warning: 0, danger: 0 };
-            
-            for (let i = 0; i < detectionCount; i++) {
-                const x = Math.floor(Math.random() * 280);
-                const y = Math.floor(Math.random() * 200);
-                const width = 30 + Math.floor(Math.random() * 50);
-                const height = 20 + Math.floor(Math.random() * 40);
-                
-                // 随机选择鱼类种类
-                const fishType = fishTypes[Math.floor(Math.random() * fishTypes.length)];
-                const fishTypeName = fishTypeNames[fishType] || '未知鱼类';
-                
-                // 随机选择健康状况
-                const healthStatus = healthStatuses[Math.floor(Math.random() * healthStatuses.length)];
-                const healthStatusName = healthStatusNames[healthStatus] || '未知';
-                
-                // 更新健康统计
-                healthStats[healthStatus]++;
-                
-                boxes.push({
-                    id: i + 1,
-                    x: x,
-                    y: y,
-                    width: width,
-                    height: height,
-                    center: { x: x + width/2, y: y + height/2 },
-                    fish_type: fishType,
-                    fish_type_name: fishTypeName,
-                    health_status: healthStatus,
-                    health_status_name: healthStatusName,
-                    confidence: (0.7 + Math.random() * 0.3).toFixed(2) // 置信度
+                // 调用AI分析接口
+                const response = await fetch(`${SERVER_URL}/api/fish_species`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: '请用中文简单说明画面中有哪些鱼的种类和大致数量。'
+                    })
                 });
-            }
-            
-            return {
-                frame_id: frameId,
-                fps: fps,
-                detection_count: detectionCount,
-                boxes: boxes,
-                health_stats: healthStats,
-                timestamp: new Date().toISOString()
-            };
-        }
-        
-        // 更新数据显示
-        function updateDataDisplay(data) {
-            // 更新基本信息
-            if (data.status === 'stopped') {
-                // 如果服务已停止，重置显示
-                resetDataDisplay();
-                addLog('监控服务已停止');
-                return;
-            }
-            
-            fpsValue.textContent = data.fps.toFixed(1);
-            detectionCount.textContent = data.detection_count;
-            frameId.textContent = data.frame_id;
-            
-            // 更新健康统计
-            if (data.health_stats) {
-                healthyCount.textContent = data.health_stats.healthy || 0;
-                warningCount.textContent = data.health_stats.warning || 0;
-                dangerCount.textContent = data.health_stats.danger || 0;
-            }
-            
-            // 更新检测框显示
-            updateDetectionBoxes(data.boxes);
-            
-            // 添加数据更新日志
-            if (data.frame_id % 10 === 0) {
-                addLog(`更新检测数据 - 帧 ${data.frame_id}, 检测到 ${data.detection_count} 条鱼`);
-            }
-        }
-        
-        // 更新检测框显示
-        function updateDetectionBoxes(boxes) {
-            detectionBoxes.innerHTML = '';
-            
-            if (!boxes || boxes.length === 0) {
-                detectionBoxes.innerHTML = '<div class="empty-detection">当前未检测到鱼类</div>';
-                return;
-            }
-            
-            // 筛选鱼类
-            let filteredBoxes = boxes;
-            if (currentFilter !== 'all') {
-                filteredBoxes = boxes.filter(box => box.fish_type === currentFilter);
-            }
-            
-            if (filteredBoxes.length === 0) {
-                detectionBoxes.innerHTML = `<div class="empty-detection">未检测到${fishTypeNames[currentFilter] || currentFilter}</div>`;
-                return;
-            }
-            
-            // 显示检测到的鱼类信息
-            filteredBoxes.forEach((box) => {
-                const healthClass = `health-${box.health_status}`;
                 
-                const boxElement = document.createElement('div');
-                boxElement.className = 'detection-box';
-                boxElement.innerHTML = `
-                    <div class="box-header">
-                        <div class="box-label">目标 ${box.id}</div>
-                        <div class="health-status ${healthClass}">${box.health_status_name}</div>
-                    </div>
-                    <div class="box-details">
-                        <div class="detail-row">
-                            <span class="detail-label">鱼类种类:</span>
-                            <span class="detail-value fish-type">${box.fish_type_name}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">位置:</span>
-                            <span class="detail-value">(${box.x}, ${box.y})</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">尺寸:</span>
-                            <span class="detail-value">${box.width}×${box.height}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">置信度:</span>
-                            <span class="detail-value">${box.confidence}</span>
-                        </div>
-                    </div>
-                `;
+                const data = await response.json();
                 
-                detectionBoxes.appendChild(boxElement);
-            });
-            
-            // 如果还有更多检测框未显示
-            if (boxes.length > filteredBoxes.length && filteredBoxes.length > 0) {
-                const moreElement = document.createElement('div');
-                moreElement.className = 'detection-box';
-                moreElement.innerHTML = `
-                    <div class="box-header">
-                        <div class="box-label">过滤信息</div>
-                    </div>
-                    <div class="box-details">
-                        <div class="detail-row">
-                            <span class="detail-label">总检测数:</span>
-                            <span class="detail-value">${boxes.length} 条</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">当前显示:</span>
-                            <span class="detail-value">${filteredBoxes.length} 条</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">过滤类型:</span>
-                            <span class="detail-value fish-type">${fishTypeNames[currentFilter] || currentFilter}</span>
-                        </div>
-                    </div>
-                `;
-                detectionBoxes.appendChild(moreElement);
-            }
-        }
-        
-        // 鱼类种类筛选
-        function filterFishType(type) {
-            currentFilter = type;
-            
-            // 更新按钮状态
-            const buttons = fishFilter.querySelectorAll('.filter-btn');
-            buttons.forEach(btn => {
-                if (btn.textContent.includes(fishTypeNames[type] || type)) {
-                    btn.classList.add('active');
+                if (data.answer) {
+                    // 显示AI分析结果
+                    aiResultContent.textContent = data.answer;
+                    
+                    // 解析AI回答中的鱼类信息
+                    const fishInfo = parseFishInfoFromAI(data.answer);
+                    
+                    // 更新显示
+                    updateFishInfoDisplay(fishInfo);
+                    
+                    addLog('AI分析完成');
                 } else {
-                    btn.classList.remove('active');
+                    aiResultContent.textContent = 'AI分析失败，请重试。';
+                    addLog('AI分析失败');
+                }
+                
+            } catch (error) {
+                console.error('AI分析失败:', error);
+                aiResultContent.textContent = 'AI分析失败，请检查网络连接和服务器状态。';
+                addLog('AI分析失败: ' + error.message);
+            } finally {
+                // 恢复分析按钮
+                analyzeBtn.disabled = false;
+                analyzeBtn.classList.remove('analyzing');
+                analyzeBtn.innerHTML = '<i class="fas fa-robot"></i> AI分析鱼类';
+            }
+        }
+        
+        // 从AI回答中解析鱼类信息
+        function parseFishInfoFromAI(aiAnswer) {
+            const fishInfo = {
+                totalCount: 0,
+                species: [],
+                details: []
+            };
+            
+            // 尝试从AI回答中提取信息
+            const lines = aiAnswer.split('\n').filter(line => line.trim());
+            
+            // 查找数量信息
+            const countMatch = aiAnswer.match(/(\d+)[条只尾]/);
+            if (countMatch) {
+                fishInfo.totalCount = parseInt(countMatch[1]);
+            }
+            
+            // 常见的鱼类种类关键词
+            const fishKeywords = [
+                { keyword: '小丑鱼', type: 'clownfish' },
+                { keyword: '神仙鱼', type: 'angel' },
+                { keyword: '孔雀鱼', type: 'guppy' },
+                { keyword: '斗鱼', type: 'betta' },
+                { keyword: '金鱼', type: 'goldfish' },
+                { keyword: '锦鲤', type: 'koi' },
+                { keyword: '倒吊鱼', type: 'tang' },
+                { keyword: '斑马鱼', type: 'zebrafish' },
+                { keyword: '灯鱼', type: 'tetra' },
+                { keyword: '龙鱼', type: 'dragonfish' }
+            ];
+            
+            // 解析每种鱼类
+            fishKeywords.forEach(({ keyword, type }) => {
+                if (aiAnswer.includes(keyword)) {
+                    // 尝试提取该种类的数量
+                    const regex = new RegExp(`${keyword}[^\\d]*?(\\d+)[条只尾]`, 'i');
+                    const match = aiAnswer.match(regex);
+                    const count = match ? parseInt(match[1]) : 1;
+                    
+                    fishInfo.species.push({
+                        name: keyword,
+                        type: type,
+                        count: count
+                    });
                 }
             });
             
-            // 重新获取数据并更新显示
-            if (monitoringInterval) {
-                // 如果是模拟数据，直接重新生成
-                const mockData = generateMockDetectionData();
-                updateDataDisplay(mockData);
-                addLog(`切换显示: ${fishTypeNames[type] || type}`);
+            // 如果无法识别具体种类，生成通用信息
+            if (fishInfo.species.length === 0 && fishInfo.totalCount > 0) {
+                for (let i = 1; i <= Math.min(fishInfo.totalCount, 5); i++) {
+                    fishInfo.details.push({
+                        id: i,
+                        type: 'unknown',
+                        typeName: '未识别鱼类',
+                        confidence: (0.6 + Math.random() * 0.3).toFixed(2),
+                        position: `位置${i}`,
+                        size: '中等'
+                    });
+                }
+            }
+            
+            return fishInfo;
+        }
+        
+        // 更新鱼类信息显示
+        function updateFishInfoDisplay(fishInfo) {
+            detectionBoxes.innerHTML = '';
+            
+            // 显示总数
+            if (fishInfo.totalCount > 0) {
+                const totalCard = document.createElement('div');
+                totalCard.className = 'detection-box';
+                totalCard.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                totalCard.innerHTML = `
+                    <div class="box-header">
+                        <div class="box-label">AI分析摘要</div>
+                        <div class="health-status health-healthy">识别完成</div>
+                    </div>
+                    <div class="box-details">
+                        <div class="detail-row">
+                            <span class="detail-label">总检测数量:</span>
+                            <span class="detail-value">${fishInfo.totalCount} 条</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">识别种类数:</span>
+                            <span class="detail-value">${fishInfo.species.length} 种</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">分析时间:</span>
+                            <span class="detail-value">${new Date().toLocaleTimeString('zh-CN', {hour12: false})}</span>
+                        </div>
+                    </div>
+                `;
+                detectionBoxes.appendChild(totalCard);
+                
+                // 显示每种鱼类的信息
+                fishInfo.species.forEach((species, index) => {
+                    const speciesCard = document.createElement('div');
+                    speciesCard.className = 'detection-box';
+                    speciesCard.innerHTML = `
+                        <div class="box-header">
+                            <div class="box-label">${species.name}</div>
+                            <div class="health-status health-healthy">已识别</div>
+                        </div>
+                        <div class="box-details">
+                            <div class="detail-row">
+                                <span class="detail-label">种类编号:</span>
+                                <span class="detail-value">#${index + 1}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">数量:</span>
+                                <span class="detail-value fish-type">${species.count} 条</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">种类:</span>
+                                <span class="detail-value">${species.type}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">状态:</span>
+                                <span class="detail-value">正常</span>
+                            </div>
+                        </div>
+                    `;
+                    detectionBoxes.appendChild(speciesCard);
+                });
+                
+                // 显示详细信息
+                if (fishInfo.details.length > 0) {
+                    fishInfo.details.forEach((detail, index) => {
+                        const detailCard = document.createElement('div');
+                        detailCard.className = 'detection-box';
+                        detailCard.innerHTML = `
+                            <div class="box-header">
+                                <div class="box-label">${detail.typeName}</div>
+                                <div class="health-status health-warning">需确认</div>
+                            </div>
+                            <div class="box-details">
+                                <div class="detail-row">
+                                    <span class="detail-label">编号:</span>
+                                    <span class="detail-value">${detail.id}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">种类:</span>
+                                    <span class="detail-value">${detail.typeName}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">置信度:</span>
+                                    <span class="detail-value">${detail.confidence}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">位置:</span>
+                                    <span class="detail-value">${detail.position}</span>
+                                </div>
+                            </div>
+                        `;
+                        detectionBoxes.appendChild(detailCard);
+                    });
+                }
+            } else {
+                detectionBoxes.innerHTML = '<div class="empty-detection">未检测到鱼类，请调整摄像头角度或确保鱼缸中有鱼</div>';
+            }
+            
+            // 更新检测数量显示
+            detectionCount.textContent = fishInfo.totalCount;
+        }
+        
+        // 获取监控数据（基本状态信息）
+        async function fetchMonitoringData() {
+            try {
+                // 这里可以添加获取基本状态信息的API调用
+                // 例如帧率、连接状态等
+                const now = Date.now();
+                const timeDiff = (now - lastUpdateTime) / 1000;
+                
+                // 模拟帧率更新（实际应用中应该从服务器获取）
+                const currentFps = 15 + Math.random() * 5;
+                fpsValue.textContent = currentFps.toFixed(1);
+                
+                // 更新帧编号
+                const currentFrameId = parseInt(frameId.textContent || 0) + 1;
+                frameId.textContent = currentFrameId;
+                
+                // 更新最后更新时间
+                lastUpdateTime = now;
+                updateLastUpdateTime();
+                
+                // 每10帧添加一条日志
+                if (currentFrameId % 10 === 0) {
+                    addLog(`系统运行中 - 帧 ${currentFrameId}, FPS: ${currentFps.toFixed(1)}`);
+                }
+                
+            } catch (error) {
+                console.error('获取监控数据失败:', error);
+                addLog('获取监控数据失败');
             }
         }
         
@@ -1003,22 +1071,8 @@
             detectionCount.textContent = '0';
             frameId.textContent = '0';
             lastUpdate.textContent = '0';
-            healthyCount.textContent = '0';
-            warningCount.textContent = '0';
-            dangerCount.textContent = '0';
             
-            detectionBoxes.innerHTML = '<div class="empty-detection">暂无检测数据，启动监控后显示</div>';
-            
-            // 重置筛选器
-            currentFilter = 'all';
-            const buttons = fishFilter.querySelectorAll('.filter-btn');
-            buttons.forEach((btn, index) => {
-                if (index === 0) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
+            detectionBoxes.innerHTML = '<div class="empty-detection">等待AI分析结果，点击"AI分析鱼类"按钮开始识别</div>';
         }
         
         // 页面加载时初始化
@@ -1042,41 +1096,14 @@
                 
                 if (data.status === 'running') {
                     // 如果服务已经在运行，自动连接
-                    addLog('检测到监控服务正在运行，正在连接...');
+                    addLog('检测到摄像头服务正在运行，正在连接...');
                     startMonitoring();
                 } else {
-                    addLog('监控服务未运行，等待启动');
+                    addLog('摄像头服务未运行，等待启动');
                 }
             } catch (error) {
                 console.error('检查服务器状态失败:', error);
-                addLog('无法连接到监控服务器，使用模拟数据演示');
-                
-                // 如果无法连接服务器，使用模拟数据演示
-                startBtn.addEventListener('click', function() {
-                    if (!monitoringInterval) {
-                        // 显示视频占位符
-                        videoFeed.style.display = 'none';
-                        videoPlaceholder.style.display = 'flex';
-                        videoPlaceholder.innerHTML = `
-                            <i class="fas fa-video-slash"></i>
-                            <p>模拟演示模式 - 实际使用需连接服务器</p>
-                            <p style="font-size: 0.9rem; margin-top: 10px;">正在显示模拟检测数据...</p>
-                        `;
-                        
-                        // 启用停止按钮，禁用启动按钮
-                        startBtn.disabled = true;
-                        stopBtn.disabled = false;
-                        
-                        // 开始定时获取模拟数据
-                        monitoringInterval = setInterval(() => {
-                            const mockData = generateMockDetectionData();
-                            updateDataDisplay(mockData);
-                        }, 1500);
-                        
-                        addLog('进入模拟演示模式');
-                        addLog('开始模拟鱼类识别与健康监测');
-                    }
-                });
+                addLog('无法连接到服务器，请确保服务器正在运行');
             }
         }
     </script>

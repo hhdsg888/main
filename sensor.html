@@ -398,18 +398,6 @@
                         <div class="sensor-icon">T</div>
                         <div class="sensor-name">温度 (°C)</div>
                     </li>
-                    <li class="sensor-item" data-sensor="ph">
-                        <div class="sensor-icon">pH</div>
-                        <div class="sensor-name">pH值</div>
-                    </li>
-                    <li class="sensor-item" data-sensor="do">
-                        <div class="sensor-icon">DO</div>
-                        <div class="sensor-name">溶解氧 (mg/L)</div>
-                    </li>
-                    <li class="sensor-item" data-sensor="ec">
-                        <div class="sensor-icon">EC</div>
-                        <div class="sensor-name">电导率 (μS/cm)</div>
-                    </li>
                 </ul>
             </div>
             
@@ -417,43 +405,16 @@
                 <div class="sensor-status">
                     <div>
                         <h2>传感器状态</h2>
-                        <div class="status-indicator status-ok" id="statusIndicator">运行正常</div>
+                        <div class="status-indicator" id="statusIndicator">正在连接...</div>
                     </div>
+                    <div class="timestamp" id="timestamp">--</div>
                 </div>
                 
                 <div id="readingsContainer">
                     <!-- 传感器读数将动态加载到这里 -->
-                    <div class="sensor-readings">
-                        <div class="reading-card">
-                            <div class="reading-header">
-                                <div class="reading-title">TDS (PPM)</div>
-                                <div class="reading-trend trend-neutral">稳定</div>
-                            </div>
-                            <div class="reading-value">123.4<span class="reading-unit">PPM</span></div>
-                            <p>总溶解固体浓度，反映水质纯度</p>
-                        </div>
-                        
-                        <div class="reading-card">
-                            <div class="reading-header">
-                                <div class="reading-title">温度 (°C)</div>
-                                <div class="reading-trend trend-up">↑ 0.2°C</div>
-                            </div>
-                            <div class="reading-value">25.6<span class="reading-unit">°C</span></div>
-                            <p>当前水温，适宜鱼类生存</p>
-                        </div>
-                    </div>
-                    
-                    <div class="meta-section">
-                        <div class="meta-title">元数据</div>
-                        <div class="meta-content" id="metaData">
-{
-  "sensor_model": "AquaMonitor Pro",
-  "firmware_version": "2.1.4",
-  "calibration_date": "2024-11-20",
-  "update_interval": 5,
-  "battery_level": 87
-}
-                        </div>
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>正在连接传感器...</p>
                     </div>
                 </div>
                 
@@ -468,54 +429,19 @@
     </div>
 
     <script>
-        // 模拟传感器数据
-        const sensorData = {
-            "status": "ok",
-            "timestamp": 1734333333.12,
-            "readings": {
-                "TDS (PPM)": 123.4,
-                "Temperature (C)": 25.6,
-                "pH": 7.2,
-                "Dissolved Oxygen (mg/L)": 8.1,
-                "Conductivity (μS/cm)": 450
-            },
-            "meta": {
-                "sensor_model": "AquaMonitor Pro",
-                "firmware_version": "2.1.4",
-                "calibration_date": "2024-11-20",
-                "update_interval": 5,
-                "battery_level": 87
-            }
-        };
-        
-        // 模拟服务未启动状态
-        const stoppedData = {
-            "status": "stopped",
-            "error": "传感器服务未运行",
-            "timestamp": 1734333333.12,
-            "readings": {},
-            "meta": {}
-        };
-        
-        // 模拟无数据状态
-        const noData = {
-            "status": "no_data",
-            "timestamp": 1734333333.12,
-            "readings": {},
-            "meta": {}
-        };
-        
-        // 当前显示的数据状态
-        let currentStatus = "ok";
+        // 定义传感器API接口
+        const SENSOR_API_URL = 'http://10.29.32.7:5000/api/sensor';
         
         // DOM元素
         const statusIndicator = document.getElementById('statusIndicator');
         const timestampElement = document.getElementById('timestamp');
         const readingsContainer = document.getElementById('readingsContainer');
-        const metaDataElement = document.getElementById('metaData');
         const refreshBtn = document.getElementById('refreshBtn');
         const historyBtn = document.getElementById('historyBtn');
         const sensorItems = document.querySelectorAll('.sensor-item');
+        
+        // 存储上一次的读数，用于计算趋势
+        let previousReadings = {};
         
         // 格式化时间戳
         function formatTimestamp(timestamp) {
@@ -531,10 +457,7 @@
         }
         
         // 根据状态更新UI
-        function updateStatus(status) {
-            currentStatus = status;
-            
-            // 更新状态指示器
+        function updateStatus(status, errorMessage = '') {
             statusIndicator.className = 'status-indicator';
             
             if (status === 'ok') {
@@ -542,10 +465,46 @@
                 statusIndicator.textContent = '运行正常';
             } else if (status === 'stopped') {
                 statusIndicator.classList.add('status-stopped');
-                statusIndicator.textContent = '服务未运行';
+                statusIndicator.textContent = errorMessage || '服务未运行';
             } else if (status === 'no_data') {
                 statusIndicator.classList.add('status-no-data');
                 statusIndicator.textContent = '无数据';
+            } else {
+                statusIndicator.textContent = '未知状态';
+            }
+        }
+        
+        // 计算趋势（与上一次读数比较）
+        function calculateTrend(currentValue, previousValue, unit) {
+            if (previousValue === undefined) {
+                return {
+                    trend: 'neutral',
+                    text: '首次读数',
+                    diff: 0
+                };
+            }
+            
+            const diff = currentValue - previousValue;
+            const absDiff = Math.abs(diff);
+            
+            if (absDiff < 0.1) { // 变化很小，视为稳定
+                return {
+                    trend: 'neutral',
+                    text: '稳定',
+                    diff: diff
+                };
+            } else if (diff > 0) {
+                return {
+                    trend: 'up',
+                    text: `↑ ${absDiff.toFixed(1)}${unit}`,
+                    diff: diff
+                };
+            } else {
+                return {
+                    trend: 'down',
+                    text: `↓ ${absDiff.toFixed(1)}${unit}`,
+                    diff: diff
+                };
             }
         }
         
@@ -555,10 +514,14 @@
             const meta = data.meta;
             
             // 更新时间戳
-            timestampElement.textContent = `最后更新: ${formatTimestamp(data.timestamp)}`;
+            if (data.timestamp) {
+                timestampElement.textContent = `最后更新: ${formatTimestamp(data.timestamp)}`;
+            } else {
+                timestampElement.textContent = '--';
+            }
             
             // 如果没有读数数据
-            if (Object.keys(readings).length === 0) {
+            if (!readings || Object.keys(readings).length === 0) {
                 readingsContainer.innerHTML = `
                     <div class="loading">
                         <div class="loading-spinner"></div>
@@ -573,33 +536,41 @@
             
             // 定义每个传感器的单位和描述
             const sensorInfo = {
-                "TDS (PPM)": { unit: "PPM", desc: "总溶解固体浓度，反映水质纯度" },
-                "Temperature (C)": { unit: "°C", desc: "当前水温，适宜鱼类生存" },
-                "pH": { unit: "", desc: "酸碱度指标，影响鱼类健康" },
-                "Dissolved Oxygen (mg/L)": { unit: "mg/L", desc: "溶解氧含量，关键生存指标" },
-                "Conductivity (μS/cm)": { unit: "μS/cm", desc: "电导率，反映水中离子浓度" }
+                "TDS (PPM)": { 
+                    unit: "PPM", 
+                    desc: "总溶解固体浓度，反映水质纯度",
+                    safeRange: { min: 0, max: 500 }
+                },
+                "Temperature (C)": { 
+                    unit: "°C", 
+                    desc: "当前水温，适宜鱼类生存",
+                    safeRange: { min: 20, max: 28 }
+                }
             };
             
             // 为每个读数生成卡片
             for (const [key, value] of Object.entries(readings)) {
                 const info = sensorInfo[key] || { unit: "", desc: "传感器读数" };
                 
-                // 随机生成趋势（仅演示用）
-                const trends = ['trend-up', 'trend-down', 'trend-neutral'];
-                const trendClasses = trends[Math.floor(Math.random() * trends.length)];
-                const trendTexts = {
-                    'trend-up': `↑ ${(Math.random() * 0.5).toFixed(1)}${info.unit}`,
-                    'trend-down': `↓ ${(Math.random() * 0.3).toFixed(1)}${info.unit}`,
-                    'trend-neutral': '稳定'
-                };
+                // 计算趋势
+                const previousValue = previousReadings[key];
+                const trend = calculateTrend(value, previousValue, info.unit);
+                
+                // 检查是否在安全范围内
+                let valueClass = 'reading-value';
+                if (info.safeRange) {
+                    if (value < info.safeRange.min || value > info.safeRange.max) {
+                        valueClass += ' warning';
+                    }
+                }
                 
                 readingsHTML += `
                     <div class="reading-card">
                         <div class="reading-header">
                             <div class="reading-title">${key}</div>
-                            <div class="reading-trend ${trendClasses}">${trendTexts[trendClasses]}</div>
+                            <div class="reading-trend trend-${trend.trend}">${trend.text}</div>
                         </div>
-                        <div class="reading-value">${value}<span class="reading-unit">${info.unit}</span></div>
+                        <div class="${valueClass}">${value}<span class="reading-unit">${info.unit}</span></div>
                         <p>${info.desc}</p>
                     </div>
                 `;
@@ -617,60 +588,99 @@
             
             readingsContainer.innerHTML = readingsHTML;
             
-            // 更新元数据显示
-            const metaDisplay = document.querySelector('.meta-content');
-            if (metaDisplay) {
-                metaDisplay.textContent = JSON.stringify(meta, null, 2);
+            // 保存当前读数作为下一次的历史数据
+            previousReadings = { ...readings };
+        }
+        
+        // 从API获取传感器数据
+        async function fetchSensorData() {
+            try {
+                const response = await fetch(SENSOR_API_URL, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    // 添加超时设置
+                    signal: AbortSignal.timeout(5000)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                return data;
+                
+            } catch (error) {
+                console.error('获取传感器数据失败:', error);
+                
+                // 根据错误类型返回相应的状态
+                if (error.name === 'TimeoutError') {
+                    return {
+                        "status": "stopped",
+                        "error": "连接超时，请检查网络连接",
+                        "timestamp": Date.now() / 1000,
+                        "readings": {},
+                        "meta": {}
+                    };
+                } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    return {
+                        "status": "stopped",
+                        "error": "无法连接到服务器",
+                        "timestamp": Date.now() / 1000,
+                        "readings": {},
+                        "meta": {}
+                    };
+                } else {
+                    return {
+                        "status": "stopped",
+                        "error": "获取数据失败: " + error.message,
+                        "timestamp": Date.now() / 1000,
+                        "readings": {},
+                        "meta": {}
+                    };
+                }
             }
         }
         
         // 加载传感器数据
-        function loadSensorData(status = 'ok') {
-            updateStatus(status);
+        async function loadSensorData() {
+            // 显示加载状态
+            statusIndicator.textContent = '正在获取数据...';
             
-            // 根据状态选择数据
-            let data;
-            if (status === 'ok') {
-                data = sensorData;
-            } else if (status === 'stopped') {
-                data = stoppedData;
-            } else {
-                data = noData;
-            }
+            const data = await fetchSensorData();
             
-            // 渲染数据
+            // 更新状态和显示数据
+            updateStatus(data.status, data.error);
             renderReadings(data);
         }
         
-        // 切换传感器数据状态（演示用）
-        function cycleStatus() {
-            const statuses = ['ok', 'stopped', 'no_data'];
-            const currentIndex = statuses.indexOf(currentStatus);
-            const nextIndex = (currentIndex + 1) % statuses.length;
-            loadSensorData(statuses[nextIndex]);
-        }
-        
         // 初始化
-        function init() {
+        async function init() {
             // 加载初始数据
-            loadSensorData('ok');
+            await loadSensorData();
             
             // 绑定刷新按钮事件
-            refreshBtn.addEventListener('click', function() {
+            refreshBtn.addEventListener('click', async function() {
                 // 添加旋转动画
                 const icon = this.querySelector('.refresh-icon');
                 icon.style.animation = 'spin 0.5s linear';
                 
-                // 模拟API请求延迟
-                setTimeout(() => {
-                    // 随机切换状态（演示用）
-                    const statuses = ['ok', 'stopped', 'no_data'];
-                    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-                    loadSensorData(randomStatus);
-                    
+                // 禁用按钮防止重复点击
+                this.disabled = true;
+                
+                try {
+                    await loadSensorData();
+                } catch (error) {
+                    console.error('刷新失败:', error);
+                    updateStatus('stopped', '刷新失败: ' + error.message);
+                } finally {
                     // 移除动画
                     icon.style.animation = '';
-                }, 500);
+                    // 重新启用按钮
+                    this.disabled = false;
+                }
             });
             
             // 绑定历史数据按钮事件
@@ -691,10 +701,22 @@
                     console.log(`切换到传感器: ${sensorType}`);
                 });
             });
+            
+            // 可选：自动刷新（每30秒）
+            // setInterval(loadSensorData, 30000);
         }
         
         // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', init);
+        
+        // 添加错误样式
+        const style = document.createElement('style');
+        style.textContent = `
+            .reading-value.warning {
+                color: var(--warning-color) !important;
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
