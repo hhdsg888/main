@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鱼缸历史数据查询</title>
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --secondary-color: #8b5cf6;
+            --dark-bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-light: #e2e8f0;
+            --text-muted: #94a3b8;
+            --healthy-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --border-color: #334155;
+            --hover-bg: #2d3748;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.95)),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="1" fill="%233b82f6" opacity="0.1"/></svg>');
+            background-size: cover;
+            background-position: center;
+            z-index: -1;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+        
+        .header {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+        
+        .content {
+            padding: 32px;
+        }
+        
+        /* 查询表单样式 */
+        .query-form {
+            background-color: var(--dark-bg);
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 40px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-title::before {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 20px;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-label {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .form-input {
+            padding: 12px 16px;
+            background-color: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-light);
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+        
+        .form-hint {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            font-style: italic;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+        
+        .btn-secondary:hover:not(:disabled) {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        /* 结果展示样式 */
+        .results-section {
+            background-color: var(--dark-bg);
+            border-radius: 10px;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+            display: none;
+        }
+        
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .results-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .results-title::before {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 20px;
+            background: var(--healthy-color);
+            border-radius: 2px;
+        }
+        
+        .results-count {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        
+        .no-results i {
+            font-size: 48px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .no-results p {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        
+        /* 数据卡片样式 */
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        
+        .data-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(51, 65, 85, 0.8));
+            border-radius: 10px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .data-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+            border-color: var(--primary-color);
+        }
+        
+        .data-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .data-card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .data-card-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(59, 130, 246, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .data-card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 12px 0;
+            display: flex;
+            align-items: baseline;
+        }
+        
+        .data-card-unit {
+            font-size: 16px;
+            color: var(--text-muted);
+            margin-left: 4px;
+        }
+        
+        .data-card-desc {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        .data-card-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-healthy {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--healthy-color);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .status-warning {
+            background-color: rgba(245, 158, 11, 0.15);
+            color: var(--warning-color);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        
+        .status-danger {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--danger-color);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        .data-card-meta {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        /* 加载动画 */
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: var(--text-muted);
+            display: none;
+        }
+        
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 表格视图样式 */
+        .table-view {
+            display: none;
+            margin-top: 30px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        .data-table th {
+            background-color: rgba(30, 41, 59, 0.8);
+            color: var(--text-light);
+            font-weight: 600;
+            text-align: left;
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+        
+        .data-table td {
+            padding: 16px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+            color: var(--text-light);
+        }
+        
+        .data-table tr:hover {
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* 视图切换 */
+        .view-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .view-btn {
+            padding: 8px 16px;
+            background-color: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .view-btn.active {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .view-btn:hover:not(.active) {
+            background-color: rgba(148, 163, 184, 0.1);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .data-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .results-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .header p {
+                font-size: 14px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .query-form {
+                padding: 20px;
+            }
+            
+            .results-section {
+                padding: 20px;
+            }
+        }
+    </style>
+    <!-- 图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>鱼缸历史数据查询系统</h1>
+            <p>查询AI识别记录、传感器数据和鱼类状态历史</p>
+        </div>
+        
+        <div class="content">
+            <!-- 查询表单 -->
+            <div class="query-form">
+                <h2 class="form-title">
+                    <i class="fas fa-search"></i> 数据查询条件
+                </h2>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-fish"></i> 鱼类种类
+                        </label>
+                        <input type="text" 
+                               class="form-input" 
+                               id="speciesInput" 
+                               placeholder="请输入鱼类种类（如：小丑鱼、金鱼等）">
+                        <div class="form-hint">支持模糊查询，可输入部分名称</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-calendar-alt"></i> 时隙/时间范围
+                        </label>
+                        <input type="text" 
+                               class="form-input" 
+                               id="timeslotInput" 
+                               placeholder="请输入时间或时隙（如：2024-01、2024-01-15等）">
+                        <div class="form-hint">支持年月、日期或具体时隙编号</div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button class="btn btn-secondary" id="resetBtn">
+                        <i class="fas fa-redo"></i> 重置查询
+                    </button>
+                    <button class="btn btn-primary" id="searchBtn">
+                        <i class="fas fa-search"></i> 开始查询
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 加载状态 -->
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>正在查询数据库，请稍候...</p>
+            </div>
+            
+            <!-- 查询结果 -->
+            <div class="results-section" id="resultsSection">
+                <div class="results-header">
+                    <div>
+                        <h2 class="results-title">
+                            <i class="fas fa-database"></i> 查询结果
+                        </h2>
+                        <div class="results-count" id="resultsCount">找到 0 条记录</div>
+                    </div>
+                    
+                    <div class="view-toggle">
+                        <button class="view-btn active" data-view="card">
+                            <i class="fas fa-th-large"></i> 卡片视图
+                        </button>
+                        <button class="view-btn" data-view="table">
+                            <i class="fas fa-table"></i> 表格视图
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 卡片视图 -->
+                <div class="data-grid" id="cardView">
+                    <!-- 数据卡片将动态生成在这里 -->
+                </div>
+                
+                <!-- 表格视图 -->
+                <div class="table-view" id="tableView">
+                    <div class="table-container">
+                        <table class="data-table" id="dataTable">
+                            <thead>
+                                <tr>
+                                    <th><i class="fas fa-fish"></i> 鱼类种类</th>
+                                    <th><i class="fas fa-clock"></i> 时隙</th>
+                                    <th><i class="fas fa-heartbeat"></i> 状态</th>
+                                    <th><i class="fas fa-thermometer-half"></i> 温度</th>
+                                    <th><i class="fas fa-tint"></i> TDS</th>
+                                    <th><i class="fas fa-calendar"></i> 记录时间</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                                <!-- 表格数据将动态生成在这里 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 无结果提示 -->
+                <div class="no-results" id="noResults">
+                    <i class="fas fa-database"></i>
+                    <p>未找到匹配的记录</p>
+                    <p>请尝试调整查询条件或联系管理员</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 数据库API接口
+        const DATABASE_API_URL = 'http://127.0.0.1:5002/api/fish_health/query'; 
+        
+        // DOM元素
+        const speciesInput = document.getElementById('speciesInput');
+        const timeslotInput = document.getElementById('timeslotInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const loading = document.getElementById('loading');
+        const resultsSection = document.getElementById('resultsSection');
+        const resultsCount = document.getElementById('resultsCount');
+        const cardView = document.getElementById('cardView');
+        const tableView = document.getElementById('tableView');
+        const tableBody = document.getElementById('tableBody');
+        const noResults = document.getElementById('noResults');
+        const viewButtons = document.querySelectorAll('.view-btn');
+
+        // 模拟数据（用于测试，实际使用时需要连接真实数据库）
+        const mockData = [
+            {
+                species: "小丑鱼（测试数据）",
+                timeslot: "2024-01-15 10:30",
+                status: "健康",
+                temperature: 26.5,
+                tds: 120,
+                timestamp: "2024-01-15 10:30:25"
+            },
+            {
+                species: "金鱼（测试数据）",
+                timeslot: "2024-01-15 11:45",
+                status: "活跃",
+                temperature: 25.8,
+                tds: 135,
+                timestamp: "2024-01-15 11:45:10"
+            },
+            {
+                species: "锦鲤（测试数据）",
+                timeslot: "2024-01-15 14:20",
+                status: "正常",
+                temperature: 24.2,
+                tds: 110,
+                timestamp: "2024-01-15 14:20:30"
+            },
+            {
+                species: "孔雀鱼（测试数据）",
+                timeslot: "2024-01-15 16:10",
+                status: "警告",
+                temperature: 29.5,
+                tds: 320,
+                timestamp: "2024-01-15 16:10:45"
+            },
+            {
+                species: "斗鱼（测试数据）",
+                timeslot: "2024-01-15 18:30",
+                status: "危险",
+                temperature: 31.2,
+                tds: 450,
+                timestamp: "2024-01-15 18:30:15"
+            }
+        ];
+        
+        // 获取状态对应的样式
+        function getStatusStyle(status) {
+            switch(status.toLowerCase()) {
+                case '健康':
+                case '活跃':
+                case '正常':
+                    return 'status-healthy';
+                case '警告':
+                case '异常':
+                    return 'status-warning';
+                case '危险':
+                case '严重':
+                    return 'status-danger';
+                default:
+                    return 'status-healthy';
+            }
+        }
+        
+        // 获取图标
+        function getSpeciesIcon(species) {
+            const iconMap = {
+                '小丑鱼': 'fas fa-fish',
+                '金鱼': 'fas fa-fish',
+                '锦鲤': 'fas fa-fish',
+                '孔雀鱼': 'fas fa-feather-alt',
+                '斗鱼': 'fas fa-fist-raised',
+                '神仙鱼': 'fas fa-crown',
+                '龙鱼': 'fas fa-dragon',
+                '灯鱼': 'fas fa-lightbulb'
+            };
+            return iconMap[species] || 'fas fa-fish';
+        }
+        
+        // 根据温度获取状态描述
+        function getTemperatureStatus(temp) {
+            if (temp >= 20 && temp <= 28) return '适宜';
+            if ((temp >= 18 && temp < 20) || (temp > 28 && temp <= 30)) return '偏高';
+            return '异常';
+        }
+        
+        // 根据TDS获取状态描述
+        function getTDSStatus(tds) {
+            if (tds < 300) return '优秀';
+            if (tds < 500) return '良好';
+            if (tds < 800) return '偏高';
+            return '危险';
+        }
+        
+        // 格式化时间显示
+        function formatTimeDisplay(timeStr) {
+            if (!timeStr) return '未知时间';
+            return timeStr.replace(' ', '<br>');
+        }
+        
+        // 查询数据库
+        async function queryDatabase(species, timeslot) {
+            const loading = document.getElementById("loading");
+            const resultsSection = document.getElementById("resultsSection");
+
+            loading.style.display = "block";
+            resultsSection.style.display = "none";
+
+            try {
+                console.log("查询参数：", species, timeslot);
+
+                const response = await fetch(DATABASE_API_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        species: species || "",
+                        timeslot: timeslot || ""
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error("HTTP 状态码错误：" + response.status);
+                }
+
+                const data = await response.json();
+                console.log("查询返回数据：", data);
+
+                if (!data.success) {
+                    throw new Error("后端返回 success=false");
+                }
+
+                return data;
+
+            } catch (error) {
+                console.error("数据库查询失败：", error);
+                alert("数据库查询失败，请检查后端服务是否启动");
+                return { success: false, error: error.message, data: [] };
+            } finally {
+                loading.style.display = "none";
+            }
+        }
+        
+        // 渲染卡片视图
+        function renderCardView(data) {
+            cardView.innerHTML = '';
+            
+            data.forEach((item, index) => {
+                const statusClass = getStatusStyle(item.status);
+                const tempStatus = getTemperatureStatus(item.temperature);
+                const tdsStatus = getTDSStatus(item.tds);
+                
+                const card = document.createElement('div');
+                card.className = 'data-card';
+                card.innerHTML = `
+                    <div class="data-card-header">
+                        <div class="data-card-title">
+                            <div class="data-card-icon">
+                                <i class="${getSpeciesIcon(item.species)}"></i>
+                            </div>
+                            ${item.species}
+                        </div>
+                        <div class="data-card-status ${statusClass}">
+                            ${item.status}
+                        </div>
+                    </div>
+                    
+                    <div class="data-card-desc">
+                        记录时间: ${item.timeslot}
+                    </div>
+                    
+                    <div class="data-card-value">
+                        ${item.temperature.toFixed(1)}
+                        <span class="data-card-unit">°C</span>
+                    </div>
+                    <div class="data-card-desc">
+                        水温状态: ${tempStatus}
+                    </div>
+                    
+                    <div class="data-card-value" style="color: #8b5cf6;">
+                        ${item.tds}
+                        <span class="data-card-unit">PPM</span>
+                    </div>
+                    <div class="data-card-desc">
+                        水质状态: ${tdsStatus}
+                    </div>
+                    
+                    <div class="data-card-meta">
+                        <span>记录编号: #${index + 1}</span>
+                        <span>详细时间: ${item.timestamp}</span>
+                    </div>
+                `;
+                cardView.appendChild(card);
+            });
+        }
+        
+        // 渲染表格视图
+        function renderTableView(data) {
+            tableBody.innerHTML = '';
+            
+            data.forEach((item, index) => {
+                const statusClass = getStatusStyle(item.status);
+                const tempStatus = getTemperatureStatus(item.temperature);
+                const tdsStatus = getTDSStatus(item.tds);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="${getSpeciesIcon(item.species)}"></i>
+                            ${item.species}
+                        </div>
+                    </td>
+                    <td>${item.timeslot}</td>
+                    <td>
+                        <span class="data-card-status ${statusClass}">
+                            ${item.status}
+                        </span>
+                    </td>
+                    <td>
+                        <div>${item.temperature.toFixed(1)}°C</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">${tempStatus}</div>
+                    </td>
+                    <td>
+                        <div>${item.tds} PPM</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">${tdsStatus}</div>
+                    </td>
+                    <td>${item.timestamp}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // 结果渲染
+        function renderResults(list) {
+            const tbody = document.getElementById("resultsTableBody");
+            tbody.innerHTML = "";
+
+            if (!list || list.length === 0) {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `<td colspan="5" style="text-align:center;">暂无数据</td>`;
+                tbody.appendChild(tr);
+                return;
+            }
+
+            list.forEach(item => {
+                const tr = document.createElement("tr");
+
+                tr.innerHTML = `
+                    <td>${item.species}</td>
+                    <td>${item.timeslot}</td>
+                    <td>${item.status || "-"}</td>
+                    <td>${item.temperature !== null ? item.temperature : "-"}</td>
+                    <td>${item.tds !== null ? item.tds : "-"}</td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 显示查询结果
+        function showResults(data) {
+            data = data || [];
+
+            resultsSection.style.display = 'block';
+            resultsCount.textContent = `找到 ${data.length} 条记录`;
+            
+            if (data.length === 0) {
+                cardView.style.display = 'none';
+                tableView.style.display = 'none';
+                noResults.style.display = 'block';
+            } else {
+                noResults.style.display = 'none';
+                
+                // 显示当前激活的视图
+                const activeView = document.querySelector('.view-btn.active').dataset.view;
+                if (activeView === 'card') {
+                    cardView.style.display = 'grid';
+                    tableView.style.display = 'none';
+                    renderCardView(data);
+                } else {
+                    cardView.style.display = 'none';
+                    tableView.style.display = 'block';
+                    renderTableView(data);
+                }
+            }
+        }
+        
+        // 执行查询
+        async function performSearch() {
+            const species = speciesInput.value.trim();
+            const timeslot = timeslotInput.value.trim();
+            
+            // 如果两个搜索条件都为空，提示用户
+            if (!species && !timeslot) {
+                alert('请输入至少一个查询条件！');
+                return;
+            }
+            
+            // 执行查询
+            const result = await queryDatabase(species, timeslot);
+            
+            if (result && result.success) {
+                showResults(result.data);
+            } else {
+                alert(result?.error || '查询失败，请重试');
+                showResults([]);
+            }
+        }
+        
+        // 重置查询
+        function resetSearch() {
+            speciesInput.value = '';
+            timeslotInput.value = '';
+            resultsSection.style.display = 'none';
+            cardView.innerHTML = '';
+            tableBody.innerHTML = '';
+        }
+        
+        // 切换视图
+        function switchView(viewType) {
+            viewButtons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.view === viewType) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            const hasData = document.querySelectorAll('.data-card').length > 0;
+            if (hasData) {
+                if (viewType === 'card') {
+                    cardView.style.display = 'grid';
+                    tableView.style.display = 'none';
+                } else {
+                    cardView.style.display = 'none';
+                    tableView.style.display = 'block';
+                }
+            }
+        }
+        
+        // 初始化事件监听
+        function initEventListeners() {
+            // 搜索按钮点击事件
+            searchBtn.addEventListener('click', performSearch);
+            
+            // 回车键搜索
+            speciesInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') performSearch();
+            });
+            
+            timeslotInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') performSearch();
+            });
+            
+            // 重置按钮点击事件
+            resetBtn.addEventListener('click', resetSearch);
+            
+            // 视图切换按钮点击事件
+            viewButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    switchView(btn.dataset.view);
+                });
+            });
+            
+            // 输入框输入事件（可以添加实时搜索功能）
+            // speciesInput.addEventListener('input', debounce(performSearch, 500));
+            // timeslotInput.addEventListener('input', debounce(performSearch, 500));
+        }
+        
+        // 防抖函数（用于实时搜索）
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initEventListeners();
+            
+            // 初始化显示（可以显示一些示例数据）
+            setTimeout(() => {
+                showResults(mockData);
+            }, 500);
+        });
+        
+        // 示例数据填充（用于测试）
+        function fillExampleData() {
+            speciesInput.value = '小丑鱼';
+            timeslotInput.value = '2024-01-15';
+            setTimeout(performSearch, 100);
+        }
+        
+        // 取消注释下一行以在页面加载时自动填充示例数据
+        // document.addEventListener('DOMContentLoaded', fillExampleData);
+    </script>
+</body>
+</html>

@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
+<!DOCTYPE <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -896,19 +895,21 @@
         </div>
         
         <div class="footer">
-            <p>© 2025 海王鱼缸监测系统 | AI鱼类识别与健康监测 v2.0 | 最后更新: <span id="currentTime">--:--:--</span></p>
+            <p>© 2025 海王鱼缸监测系统 | AI鱼类识别与健康监测 v1.0 | 最后更新: <span id="currentTime">--:--:--</span></p>
         </div>
     </div>
 
     <script>
         // 服务器配置 - 根据实际情况修改
         const SERVER_URL = 'http://10.29.32.7:5000'; // 修改为你的树莓派IP
+        const DB_API_URL = "http://127.0.0.1:5001/api/fish_health/query";
         const SENSOR_API_URL = `${SERVER_URL}/api/sensor`;
         
         let monitoringInterval = null;
         let sensorInterval = null;
         let lastUpdateTime = Date.now();
         let cameraStarted = false;
+        let currentFishSpecies = "未知";
         
         // 存储上一次的传感器读数，用于计算趋势
         let previousSensorReadings = {
@@ -1223,6 +1224,14 @@
                     // 开始定时获取传感器数据（每5秒）
                     if (sensorInterval) clearInterval(sensorInterval);
                     sensorInterval = setInterval(loadSensorData, 5000);
+
+                    // 数据库写入定时器
+                    if (window.dbUploadInterval) {
+                        clearInterval(window.dbUploadInterval);
+                    }
+
+                    window.dbUploadInterval = setInterval(uploadFishHealthData, 10000);
+
                     
                     // 立即加载一次传感器数据
                     await loadSensorData();
@@ -1278,6 +1287,11 @@
                     if (sensorInterval) {
                         clearInterval(sensorInterval);
                         sensorInterval = null;
+                    }
+                    
+                    if (window.dbUploadInterval) {
+                        clearInterval(window.dbUploadInterval);
+                        window.dbUploadInterval = null;
                     }
                     
                     // 重置数据显示
@@ -1449,6 +1463,7 @@
                 
                 // 显示每种鱼类的信息
                 fishInfo.species.forEach((species, index) => {
+                    currentFishSpecies = species.name;
                     const speciesCard = document.createElement('div');
                     speciesCard.className = 'detection-box';
                     speciesCard.innerHTML = `
@@ -1518,6 +1533,45 @@
             detectionCount.textContent = fishInfo.totalCount;
         }
         
+        async function uploadFishHealthData() {
+            const species = currentFishSpecies || "未知";
+            const frame = parseInt(frameId.textContent || 0);
+
+            const temperature = tempValue.textContent !== '--'
+                ? parseFloat(tempValue.textContent)
+                : null;
+
+            const tds = tdsValue.textContent !== '--'
+                ? parseFloat(tdsValue.textContent)
+                : null;
+
+            const payload = {
+                species: species,
+                frame_id: frame,
+                status: "正常",
+                temperature: temperature,
+                tds: tds
+            };
+
+            try {
+                const res = await fetch(DB_API_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    console.log("数据已写入数据库", payload);
+                } else {
+                    console.error("数据库写入失败");
+                }
+            } catch (e) {
+                console.error("数据库请求异常", e);
+            }
+        }
+
         // 获取监控数据（基本状态信息）
         async function fetchMonitoringData() {
             try {
