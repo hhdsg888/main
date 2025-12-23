@@ -59,6 +59,88 @@
         }
         
         .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center; /* 确保垂直居中 */
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+            min-height: 100px; /* 给header一个最小高度确保对称 */
+        }
+
+        .header-content {
+            flex: 1;
+        }
+
+        .btn-back {
+            padding: 12px 20px; /* 增加垂直padding使按钮更高 */
+            background: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center; /* 确保内容在按钮内垂直居中 */
+            gap: 8px;
+            white-space: nowrap;
+            margin-left: 20px;
+            height: fit-content; /* 高度自适应内容 */
+            line-height: 1.2; /* 行高调整 */
+        }
+
+        .btn-back:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .header {
+            display: flex;
+            align-items: stretch; /* 改为拉伸对齐 */
+            /* 其他样式保持不变 */
+        }
+
+        .header-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* 标题内容垂直居中 */
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+                padding: 24px 20px; /* 保持对称的padding */
+                min-height: auto; /* 移动端不需要最小高度 */
+            }
+            
+            .btn-back {
+                margin-left: 0;
+                align-self: stretch; /* 在移动端让按钮宽度拉伸 */
+                text-align: center;
+                justify-content: center;
+                padding: 12px 16px; /* 移动端调整padding */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 20px 16px;
+            }
+            
+            .btn-back {
+                width: 100%;
+                padding: 14px 16px; /* 移动端增加触摸区域 */
+            }
+        }
+
+        .header {
             background-color: var(--dark-bg);
             color: var(--text-light);
             padding: 24px 32px;
@@ -526,6 +608,9 @@
             <h1>鱼缸历史数据查询系统</h1>
             <p>查询AI识别记录、传感器数据和鱼类状态历史</p>
         </div>
+        <button class="btn-back" id="backBtn">
+            <i class="fas fa-arrow-left"></i> 返回主页面
+        </button>
         
         <div class="content">
             <!-- 查询表单 -->
@@ -647,6 +732,7 @@
         const tableBody = document.getElementById('tableBody');
         const noResults = document.getElementById('noResults');
         const viewButtons = document.querySelectorAll('.view-btn');
+        const backBtn = document.getElementById('backBtn');
 
         // 模拟数据（用于测试，实际使用时需要连接真实数据库）
         const mockData = [
@@ -1011,9 +1097,9 @@
                 });
             });
             
-            // 输入框输入事件（可以添加实时搜索功能）
-            // speciesInput.addEventListener('input', debounce(performSearch, 500));
-            // timeslotInput.addEventListener('input', debounce(performSearch, 500));
+            backBtn.addEventListener('click', () => {
+                window.history.back();
+            });
         }
         
         // 防抖函数（用于实时搜索）

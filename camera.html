@@ -90,7 +90,81 @@
                 grid-template-columns: 1fr;
             }
         }
+        /* 返回按钮样式 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+        }
 
+        .header-content {
+            flex: 1;
+        }
+
+        .btn-back {
+            padding: 10px 20px;
+            background: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            margin-left: 20px;
+        }
+
+        .btn-back:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+                padding: 20px;
+            }
+            
+            .btn-back {
+                margin-left: 0;
+                align-self: flex-start;
+            }
+            
+            .header-content h1 {
+                font-size: 24px;
+            }
+            
+            .header-content p {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 16px;
+            }
+            
+            .btn-back {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .header-content h1 {
+                font-size: 22px;
+            }
+        }
         /* 视频监控区域 */
         .video-section {
             background: linear-gradient(135deg, var(--card-bg), #334155);
@@ -738,6 +812,9 @@
             <h1>海王鱼缸实时监测系统</h1>
             <p>实时监控鱼缸状态，AI识别鱼类种类，监控水质参数</p>
         </div>
+        <button class="btn-back" id="backBtn">
+            <i class="fas fa-arrow-left"></i> 返回上一级
+        </button>
         
         <div class="main-content">
             <!-- 左侧：视频监控 -->
@@ -932,6 +1009,7 @@
         const detectionBoxes = document.getElementById('detectionBoxes');
         const logList = document.getElementById('logList');
         const currentTime = document.getElementById('currentTime');
+        const backBtn = document.getElementById('backBtn');
         
         // 传感器相关DOM元素
         const sensorStatusIndicator = document.getElementById('sensorStatusIndicator');
@@ -1647,6 +1725,11 @@
             
             // 检查服务器状态
             checkServerStatus();
+
+            backBtn.addEventListener('click', () => {
+               window.history.back();
+            });
+            
         });
         
         // 检查服务器状态

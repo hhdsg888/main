@@ -40,7 +40,7 @@
             font-size: 2.8rem;
             margin-bottom: 50px;
             text-align: center;
-            text-shadow: 0 2px 8px rgba(255, 255, 255, 0.524);
+            text-shadow: 0 2px 8px rgb(255, 255, 255);
             background: linear-gradient(90deg, #ffffff);
             -webkit-background-clip: text;
             background-clip: text;
@@ -103,6 +103,150 @@
             opacity: 1;
         }
 
+        /* 养鱼小贴士容器样式 */
+        .tips-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(51, 65, 85, 0.95));
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            z-index: 50;
+            backdrop-filter: blur(5px);
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .tips-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3b82f6;
+        }
+
+        .tips-title {
+            font-size: 1.3rem;
+            color: #3b82f6;
+            margin: 0;
+            font-weight: bold;
+        }
+
+        .tips-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .tips-btn {
+            background: rgba(59, 130, 246, 0.2);
+            border: none;
+            color: #e2e8f0;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .tips-btn:hover {
+            background: rgba(59, 130, 246, 0.5);
+            transform: scale(1.1);
+        }
+
+        .tips-content {
+            color: #e2e8f0;
+            font-size: 1rem;
+            line-height: 1.6;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+        }
+
+        .tips-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        .tips-indicator {
+            display: flex;
+            gap: 6px;
+        }
+
+        .tips-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: rgba(148, 163, 184, 0.5);
+            transition: background-color 0.3s;
+        }
+
+        .tips-dot.active {
+            background-color: #3b82f6;
+        }
+
+        .tips-auto-toggle {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 36px;
+            height: 20px;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(148, 163, 184, 0.5);
+            border-radius: 34px;
+            transition: .4s;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: .4s;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: #3b82f6;
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(16px);
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
         /* 响应式设计 */
         @media (max-width: 768px) {
             .button-container {
@@ -119,6 +263,15 @@
                 padding: 30px 20px;
                 font-size: 20px;
             }
+            
+            .tips-container {
+                position: relative;
+                top: 0;
+                right: 0;
+                width: 100%;
+                max-width: 350px;
+                margin: 0 auto 30px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -129,6 +282,11 @@
             .big-button {
                 padding: 25px 15px;
                 font-size: 18px;
+            }
+            
+            .tips-container {
+                padding: 15px;
+                max-width: 100%;
             }
         }
 
@@ -281,6 +439,17 @@
             }
         }
 
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .info-modal.show {
             display: flex;
             animation: fadeIn 0.3s;
@@ -294,6 +463,32 @@
 </head>
 <body>
     <h1>海王鱼缸</h1>
+    
+    <!-- 养鱼小贴士容器 -->
+    <div class="tips-container">
+        <div class="tips-header">
+            <h3 class="tips-title">养鱼小贴士</h3>
+            <div class="tips-controls">
+                <button class="tips-btn" id="prevTip">‹</button>
+                <button class="tips-btn" id="nextTip">›</button>
+            </div>
+        </div>
+        <div class="tips-content" id="tipContent">
+            <!-- 小贴士内容将通过JavaScript动态插入 -->
+        </div>
+        <div class="tips-footer">
+            <div class="tips-indicator" id="tipIndicator">
+                <!-- 指示点将通过JavaScript动态生成 -->
+            </div>
+            <div class="tips-auto-toggle">
+                <span>自动播放</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="autoToggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
     
     <div class="button-container">
         <button class="big-button" onclick="goToCamera()">鱼缸监控</button>
@@ -317,12 +512,14 @@
                     <li><strong>鱼缸监控</strong> - 实时监控鱼类状况，系统自动识别种类</li>
                     <li><strong>记录查询</strong> - 查看鱼类状况历史记录</li>
                     <li><strong>饲养指南</strong> - 详细了解每种鱼的特征、习性，获取各类鱼类的饲养方法和注意事项</li>
+                    <li><strong>养鱼小贴士</strong> - 右上角查看实用的养鱼技巧，自动循环展示</li>
                 </ul>
                 
                 <p><strong>使用提示：</strong></p>
                 <ul class="info-list">
                     <li>所有功能按钮都有悬停效果提示</li>
                     <li>系统支持响应式设计，适配各种设备</li>
+                    <li>养鱼小贴士支持自动播放和手动切换</li>
                     <li>如需帮助，请随时查看此说明</li>
                 </ul>
             </div>
@@ -333,17 +530,142 @@
     </div>
 
     <script>
+        // 养鱼小贴士数据
+        const fishTips = [
+            "新手建议从皮实的品种开始，如斑马鱼、金鱼。",
+            "养鱼先养水，自来水需晾晒2-3天除氯。",
+            "控制喂食量，以2分钟内吃完为宜，避免污染水质。",
+            "定期换水，每周换1/3左右，保持水质稳定。",
+            "根据鱼的数量和大小选择合适大小的鱼缸。",
+            "新鱼入缸前需过温过水，减少环境突变带来的应激。",
+            "安装过滤器并保持持续运行，维持水体清洁。",
+            "避免阳光直射鱼缸，以防藻类过度生长。",
+            "备好基础药物，如海盐、黄粉，应对常见疾病。",
+            "不同鱼种习性各异，混养前需了解其兼容性。"
+        ];
+
+        // 小贴士相关变量
+        let currentTipIndex = 0;
+        let autoPlayInterval;
+        const autoPlayDelay = 5000; // 5秒切换一次
+
+        // DOM元素
+        const tipContent = document.getElementById('tipContent');
+        const tipIndicator = document.getElementById('tipIndicator');
+        const prevBtn = document.getElementById('prevTip');
+        const nextBtn = document.getElementById('nextTip');
+        const autoToggle = document.getElementById('autoToggle');
+
+        // 初始化小贴士
+        function initTips() {
+            // 显示第一条小贴士
+            updateTipContent();
+            
+            // 创建指示点
+            createIndicators();
+            
+            // 设置事件监听器
+            prevBtn.addEventListener('click', showPrevTip);
+            nextBtn.addEventListener('click', showNextTip);
+            autoToggle.addEventListener('change', toggleAutoPlay);
+            
+            // 启动自动播放
+            startAutoPlay();
+        }
+
+        // 更新小贴士内容
+        function updateTipContent() {
+            tipContent.textContent = `${currentTipIndex + 1}. ${fishTips[currentTipIndex]}`;
+            updateIndicators();
+        }
+
+        // 创建指示点
+        function createIndicators() {
+            tipIndicator.innerHTML = '';
+            for (let i = 0; i < fishTips.length; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'tips-dot';
+                dot.dataset.index = i;
+                dot.addEventListener('click', () => showTipByIndex(i));
+                tipIndicator.appendChild(dot);
+            }
+            updateIndicators();
+        }
+
+        // 更新指示点状态
+        function updateIndicators() {
+            const dots = document.querySelectorAll('.tips-dot');
+            dots.forEach((dot, index) => {
+                if (index === currentTipIndex) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        // 显示上一条小贴士
+        function showPrevTip() {
+            currentTipIndex = (currentTipIndex - 1 + fishTips.length) % fishTips.length;
+            updateTipContent();
+            resetAutoPlay();
+        }
+
+        // 显示下一条小贴士
+        function showNextTip() {
+            currentTipIndex = (currentTipIndex + 1) % fishTips.length;
+            updateTipContent();
+            resetAutoPlay();
+        }
+
+        // 根据索引显示小贴士
+        function showTipByIndex(index) {
+            currentTipIndex = index;
+            updateTipContent();
+            resetAutoPlay();
+        }
+
+        // 启动自动播放
+        function startAutoPlay() {
+            if (autoToggle.checked) {
+                autoPlayInterval = setInterval(showNextTip, autoPlayDelay);
+            }
+        }
+
+        // 停止自动播放
+        function stopAutoPlay() {
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = null;
+            }
+        }
+
+        // 重置自动播放
+        function resetAutoPlay() {
+            stopAutoPlay();
+            startAutoPlay();
+        }
+
+        // 切换自动播放状态
+        function toggleAutoPlay() {
+            if (autoToggle.checked) {
+                startAutoPlay();
+            } else {
+                stopAutoPlay();
+            }
+        }
+
         // 更改背景图片
         function changeBackground(type) {
             const body = document.body;
-            const url = backgroundOptions[type] || backgroundOptions.fish;
+            // 移除之前导致错误的backgroundOptions引用
+            const url = './clownfish-media1.jpg'; // 使用固定背景图片
             
             // 创建渐变过渡效果
             body.style.transition = 'background-color 0.5s';
             body.style.backgroundColor = 'rgba(15, 23, 42, 0.9)';
             
             setTimeout(() => {
-                const beforeElement = document.querySelector('body::before');
                 // 修改背景图片
                 document.body.style.backgroundImage = `url(${url})`;
                 
@@ -356,7 +678,7 @@
 
         // 鱼类介绍页面跳转
         function goToFishIntroduce() {
-            window.location.href = "../fishintroduce/fishintroduce.html";
+            window.location.href = "./fishintroduce/fishintroduce.html";
         }
 
         function goToCamera(){
@@ -403,10 +725,10 @@
             });
         }
 
-        // 页面加载时设置初始背景
+        // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
-            // 设置默认背景为鱼类背景
-            changeBackground('fish');
+            // 初始化养鱼小贴士
+            initTips();
         });
     </script>
 </body>
