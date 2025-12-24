@@ -1,4 +1,5 @@
-<!DOCTYPE <html lang="zh-CN">
+<!DOCTYPE html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -229,6 +230,7 @@
             display: flex;
             gap: 15px;
             justify-content: center;
+            flex-wrap: wrap;
         }
 
         .control-btn {
@@ -258,6 +260,10 @@
 
         .control-btn.stop {
             background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .control-btn.screenshot {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
         }
 
         .control-btn:disabled {
@@ -304,6 +310,85 @@
             background: rgba(16, 185, 129, 0.1);
             border-radius: 8px;
             border-left: 3px solid #10b981;
+        }
+
+        /* 截图结果区域 */
+        .screenshot-section {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            display: none;
+        }
+
+        .screenshot-title {
+            font-size: 1.2rem;
+            color: #f59e0b;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .screenshot-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .screenshot-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            border: 2px solid rgba(245, 158, 11, 0.5);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .screenshot-meta {
+            width: 100%;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .screenshot-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .action-btn:hover {
+            background: rgba(245, 158, 11, 0.3);
+        }
+
+        .action-btn.download {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--primary-color);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .action-btn.download:hover {
+            background: rgba(59, 130, 246, 0.3);
         }
 
         /* 数据监测区域 */
@@ -786,6 +871,16 @@
                 flex-direction: column;
                 gap: 15px;
             }
+
+            .video-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .control-btn {
+                width: 100%;
+                max-width: 200px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -836,6 +931,9 @@
                     <button class="control-btn stop" id="stopBtn" onclick="stopMonitoring()" disabled>
                         <i class="fas fa-stop"></i> 停止监控
                     </button>
+                    <button class="control-btn screenshot" id="screenshotBtn" onclick="captureScreenshot()" disabled>
+                        <i class="fas fa-camera"></i> 截图
+                    </button>
                 </div>
 
                 <!-- AI分析按钮 -->
@@ -850,6 +948,27 @@
                     </h3>
                     <div class="ai-result-content" id="aiResultContent">
                         等待分析结果...
+                    </div>
+                </div>
+
+                <!-- 截图结果区域 -->
+                <div class="screenshot-section" id="screenshotSection">
+                    <h3 class="screenshot-title">
+                        <i class="fas fa-camera-retro"></i> 截图结果
+                    </h3>
+                    <div class="screenshot-content" id="screenshotContent">
+                        <img id="screenshotImage" class="screenshot-image" src="" alt="截图预览">
+                        <div class="screenshot-meta">
+                            <span id="screenshotInfo">截图信息</span>
+                            <div class="screenshot-actions">
+                                <button class="action-btn download" onclick="downloadScreenshot()">
+                                    <i class="fas fa-download"></i> 下载
+                                </button>
+                                <button class="action-btn" onclick="closeScreenshot()">
+                                    <i class="fas fa-times"></i> 关闭
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -987,6 +1106,7 @@
         let lastUpdateTime = Date.now();
         let cameraStarted = false;
         let currentFishSpecies = "未知";
+        let videoFeedReady = false;
         
         // 存储上一次的传感器读数，用于计算趋势
         let previousSensorReadings = {
@@ -1000,8 +1120,12 @@
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
         const analyzeBtn = document.getElementById('analyzeBtn');
+        const screenshotBtn = document.getElementById('screenshotBtn');
         const aiResultSection = document.getElementById('aiResultSection');
         const aiResultContent = document.getElementById('aiResultContent');
+        const screenshotSection = document.getElementById('screenshotSection');
+        const screenshotImage = document.getElementById('screenshotImage');
+        const screenshotInfo = document.getElementById('screenshotInfo');
         const fpsValue = document.getElementById('fpsValue');
         const detectionCount = document.getElementById('detectionCount');
         const frameId = document.getElementById('frameId');
@@ -1287,10 +1411,22 @@
                     videoFeed.style.display = 'block';
                     videoPlaceholder.style.display = 'none';
                     
-                    // 启用停止按钮和AI分析按钮，禁用启动按钮
+                    videoFeed.onload = function() {
+                        videoFeedReady = true;
+                        console.log('视频流已加载完成');
+                        addLog('视频流已就绪，可以截图');
+                    };
+
+                    videoFeed.onerror = function() {
+                        console.error('视频流加载失败');
+                        addLog('视频流加载失败');
+                    };
+                    
+                    // 启用停止按钮、AI分析按钮和截图按钮，禁用启动按钮
                     startBtn.disabled = true;
                     stopBtn.disabled = false;
                     analyzeBtn.disabled = false;
+                    screenshotBtn.disabled = false;
                     
                     // 设置标志
                     cameraStarted = true;
@@ -1344,13 +1480,15 @@
                     videoFeed.style.display = 'none';
                     videoPlaceholder.style.display = 'flex';
                     
-                    // 启用启动按钮，禁用停止按钮和AI分析按钮
+                    // 启用启动按钮，禁用停止按钮、AI分析按钮和截图按钮
                     startBtn.disabled = false;
                     stopBtn.disabled = true;
                     analyzeBtn.disabled = true;
+                    screenshotBtn.disabled = true;
                     
-                    // 隐藏AI分析结果
+                    // 隐藏AI分析结果和截图结果
                     aiResultSection.style.display = 'none';
+                    screenshotSection.style.display = 'none';
                     
                     // 设置标志
                     cameraStarted = false;
@@ -1384,6 +1522,234 @@
                 addLog('停止摄像头服务时出错');
                 console.error('停止监控失败:', error);
             }
+        }
+
+        // 截图功能
+        async function captureScreenshot() {
+            if (!cameraStarted) {
+                alert('请先启动摄像头服务！');
+                return;
+            }
+
+            try {
+                addLog('正在截取当前画面...');
+
+                screenshotBtn.disabled = true;
+                screenshotBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 截图中...';
+
+                // 获取最新截图（优先走后端截图接口，避免前端跨域/缓存问题）
+                const response = await fetch(`${SERVER_URL}/api/capture?t=${Date.now()}`, {
+                    method: 'GET',
+                    cache: 'no-store',
+                    headers: {
+                        'Accept': 'image/jpeg,application/json'
+                    }
+                });
+
+                // 后端可能在未运行/无帧时返回 JSON（200/4xx/5xx 都可能），这里统一处理
+                const contentType = (response.headers.get('content-type') || '').toLowerCase();
+
+                if (contentType.includes('application/json')) {
+                    const data = await response.json().catch(() => ({}));
+                    const msg = data.error || data.message || `截图失败（${response.status}）`;
+                    throw new Error(msg);
+                }
+
+                if (!response.ok) {
+                    throw new Error(`截图失败（HTTP ${response.status}）`);
+                }
+
+                const blob = await response.blob();
+                if (!blob || (blob.type && !blob.type.startsWith('image/'))) {
+                    // 极端情况下返回了非图片内容
+                    const text = await blob.text().catch(() => '');
+                    throw new Error(`截图返回非图片内容：${text ? text.slice(0, 120) : 'unknown'}`);
+                }
+
+                // 清理旧的 ObjectURL，防止内存泄露
+                if (window.currentScreenshotObjectUrl) {
+                    URL.revokeObjectURL(window.currentScreenshotObjectUrl);
+                    window.currentScreenshotObjectUrl = null;
+                }
+
+                const imageUrl = URL.createObjectURL(blob);
+                window.currentScreenshotObjectUrl = imageUrl;
+
+                // 显示截图结果区域
+                screenshotSection.style.display = 'block';
+
+                // 设置截图图片
+                screenshotImage.src = imageUrl;
+
+                // 更新截图信息
+                const now = new Date();
+                const timestamp = now.toLocaleString('zh-CN');
+                const tempText = tempValue.textContent !== '--' ? `${tempValue.textContent}°C` : '--';
+                const tdsText = tdsValue.textContent !== '--' ? `${tdsValue.textContent}PPM` : '--';
+                const fishCount = detectionCount.textContent;
+
+                screenshotImage.alt = `鱼缸截图 ${timestamp}`;
+                screenshotInfo.textContent = `截图时间: ${timestamp} | 温度: ${tempText} | TDS: ${tdsText} | 鱼类: ${fishCount}条`;
+
+                // 保存截图数据
+                window.currentScreenshotBlob = blob;
+                window.currentScreenshotDataUrl = null; // 清空错误截图 dataURL
+                window.currentScreenshotTimestamp = timestamp;
+
+                addLog(`截图成功 - ${timestamp}`);
+
+            } catch (error) {
+                console.error('截图失败:', error);
+                const msg = (error && error.message) ? error.message : '未知错误';
+                addLog('截图失败: ' + msg);
+                showErrorScreenshot(msg);
+                alert('截图失败: ' + msg);
+            } finally {
+                screenshotBtn.disabled = false;
+                screenshotBtn.innerHTML = '<i class="fas fa-camera"></i> 截图';
+            }
+        }
+
+        // 修改下载函数
+        function downloadScreenshot() {
+            // 优先下载真实截图 blob；如果是错误截图，则下载 dataURL
+            if (window.currentScreenshotBlob) {
+                try {
+                    const downloadLink = document.createElement('a');
+                    const timestamp = window.currentScreenshotTimestamp || new Date().toLocaleString('zh-CN');
+                    const safeTs = String(timestamp).replace(/[: ]/g, '_').replace(/[\/]/g, '-');
+                    const filename = `鱼缸监测截图_${safeTs}.jpg`;
+
+                    const url = URL.createObjectURL(window.currentScreenshotBlob);
+                    downloadLink.href = url;
+                    downloadLink.download = filename;
+
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+
+                    setTimeout(() => URL.revokeObjectURL(url), 300);
+
+                    addLog(`截图已下载: ${filename}`);
+                    return;
+                } catch (e) {
+                    console.error('下载失败:', e);
+                    addLog('下载截图失败');
+                    alert('下载失败，请重试。');
+                    return;
+                }
+            }
+
+            if (window.currentScreenshotDataUrl) {
+                try {
+                    const downloadLink = document.createElement('a');
+                    const timestamp = window.currentScreenshotTimestamp || new Date().toLocaleString('zh-CN');
+                    const safeTs = String(timestamp).replace(/[: ]/g, '_').replace(/[\/]/g, '-');
+                    const filename = `鱼缸监测截图_${safeTs}.png`;
+
+                    downloadLink.href = window.currentScreenshotDataUrl;
+                    downloadLink.download = filename;
+
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+
+                    addLog(`截图已下载: ${filename}`);
+                    return;
+                } catch (e) {
+                    console.error('下载失败:', e);
+                    addLog('下载截图失败');
+                    alert('下载失败，请重试。');
+                    return;
+                }
+            }
+
+            alert('没有可下载的截图！');
+        }
+
+        // 等待视频就绪的辅助函数
+        function waitForVideoReady() {
+            return new Promise((resolve, reject) => {
+                let attempts = 0;
+                const maxAttempts = 10;
+                
+                const checkVideo = () => {
+                    attempts++;
+                    
+                    if (videoFeed.videoWidth > 0 && videoFeed.videoHeight > 0) {
+                        videoFeedReady = true;
+                        resolve();
+                        return;
+                    }
+                    
+                    if (attempts >= maxAttempts) {
+                        reject(new Error('视频加载超时'));
+                        return;
+                    }
+                    
+                    setTimeout(checkVideo, 500);
+                };
+                
+                checkVideo();
+            });
+        }
+
+        // 显示错误截图
+        function showErrorScreenshot(errorMessage) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            canvas.width = 640;
+            canvas.height = 480;
+            
+            // 创建错误背景
+            context.fillStyle = '#1e293b';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 添加错误图标
+            context.fillStyle = '#ef4444';
+            context.font = '80px Arial';
+            context.textAlign = 'center';
+            context.fillText('⚠️', canvas.width/2, canvas.height/2 - 50);
+            
+            // 添加错误信息
+            context.fillStyle = '#ffffff';
+            context.font = '20px Arial';
+            context.fillText('截图失败', canvas.width/2, canvas.height/2 + 20);
+            context.font = '16px Arial';
+            context.fillText(errorMessage, canvas.width/2, canvas.height/2 + 50);
+            
+            // 添加说明
+            context.fillStyle = '#94a3b8';
+            context.font = '14px Arial';
+            context.fillText('请确保摄像头已正确连接并启动', canvas.width/2, canvas.height/2 + 90);
+            
+            const screenshotDataUrl = canvas.toDataURL('image/png');
+            
+            // 显示截图结果区域
+            screenshotSection.style.display = 'block';
+            screenshotImage.src = screenshotDataUrl;
+            screenshotImage.alt = '截图错误';
+            
+            const now = new Date();
+            const timestamp = now.toLocaleString('zh-CN');
+            screenshotInfo.textContent = `截图失败 - ${timestamp} | 错误: ${errorMessage}`;
+            
+            // 保存截图数据
+            window.currentScreenshotDataUrl = screenshotDataUrl;
+            window.currentScreenshotBlob = null;
+            if (window.currentScreenshotObjectUrl) {
+                URL.revokeObjectURL(window.currentScreenshotObjectUrl);
+                window.currentScreenshotObjectUrl = null;
+            }
+            window.currentScreenshotTimestamp = timestamp;
+        }
+
+        
+        // 关闭截图显示（保持不变）
+        function closeScreenshot() {
+            screenshotSection.style.display = 'none';
+            addLog('已关闭截图显示');
         }
         
         // AI分析鱼类种类
@@ -1688,6 +2054,8 @@
             frameId.textContent = '0';
             lastUpdate.textContent = '0';
             
+            videoFeedReady = false;
+            
             detectionBoxes.innerHTML = '<div class="empty-detection">等待AI分析结果，点击"AI分析鱼类"按钮开始识别</div>';
             
             // 重置传感器显示
@@ -1706,6 +2074,9 @@
             sensorTimestamp.textContent = '--';
             sensorStatusIndicator.className = 'sensor-status-indicator';
             sensorStatusIndicator.textContent = '传感器未连接';
+            
+            // 隐藏截图区域
+            screenshotSection.style.display = 'none';
         }
         
         // 页面加载时初始化
