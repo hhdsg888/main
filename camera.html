@@ -1098,7 +1098,7 @@
     <script>
         // 服务器配置 - 根据实际情况修改
         const SERVER_URL = 'http://10.29.32.7:5000'; // 修改为你的树莓派IP
-        const DB_API_URL = "http://127.0.0.1:5001/api/fish_health/query";
+        const DB_WRITE_API_URL = "http://127.0.0.1:5001/api/save_fish_health";
         const SENSOR_API_URL = `${SERVER_URL}/api/sensor`;
         
         let monitoringInterval = null;
@@ -1979,7 +1979,16 @@
         
         async function uploadFishHealthData() {
             const species = currentFishSpecies || "未知";
-            const frame = parseInt(frameId.textContent || 0);
+            
+            // 修改这里：使用当前时间作为timeslot，而不是帧编号
+            const timeslot = new Date().toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
 
             const temperature = tempValue.textContent !== '--'
                 ? parseFloat(tempValue.textContent)
@@ -1991,14 +2000,14 @@
 
             const payload = {
                 species: species,
-                frame_id: frame,
+                timeslot: timeslot,  // 修改这里：改为timeslot而不是frame_id
                 status: "正常",
                 temperature: temperature,
                 tds: tds
             };
 
             try {
-                const res = await fetch(DB_API_URL, {
+                const res = await fetch(DB_WRITE_API_URL, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -2008,11 +2017,14 @@
 
                 if (res.ok) {
                     console.log("数据已写入数据库", payload);
+                    addLog(`传感器数据已保存: ${species} - 温度: ${temperature}°C, TDS: ${tds}PPM`);
                 } else {
                     console.error("数据库写入失败");
+                    addLog("数据库写入失败");
                 }
             } catch (e) {
                 console.error("数据库请求异常", e);
+                addLog("数据库连接失败");
             }
         }
 
